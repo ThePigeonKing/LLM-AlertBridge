@@ -14,26 +14,20 @@ The LLM acts as an **intelligent assistant** for the analyst -- it does not make
 ## Architecture
 
 ```
-            Yandex Cloud                              Analyst Laptop
-  ┌─────────────────────────────┐              ┌─────────────────────┐
-  │  core-compute               │  VPN tunnel  │                     │
-  │  ┌───────────┐ ┌─────────┐ │◄────────────►│  LM Studio          │
-  │  │PostgreSQL │ │ FastAPI  │─┼──────────────│  (Local LLM,        │
-  │  │           │ │ Backend  │ │  LLM API     │   port 1234)        │
-  │  └───────────┘ └─────────┘ │              └─────────────────────┘
-  │  ┌─────────────────────┐   │                       │
-  │  │ Wazuh Manager       │   │                ┌──────▼──────┐
-  │  └─────────────────────┘   │                │   Analyst   │
-  │                             │                │  (Browser → │
-  │  target-1  target-2        │                │  :8000 VPN) │
-  │  (Agents)  (Agents)        │                └─────────────┘
-  │                             │
-  │  attacker-compute           │
-  │  (Simulations)              │
-  └─────────────────────────────┘
+            Yandex Cloud (10.128.0.0/24)              Analyst Laptop
+  ┌──────────────────────────────────┐         ┌─────────────────────┐
+  │ core-compute 10.128.0.29         │  VPN    │ LM Studio (your IP) │
+  │ ┌──────────┐ ┌────────────────┐ │◄───────►│ port 1234           │
+  │ │PostgreSQL│ │ FastAPI :8000  │─┼─────────│                     │
+  │ └──────────┘ └────────────────┘ │         └─────────────────────┘
+  │ Wazuh manager                    │                  │
+  │ target-1 .35   target-2 .14      │           ┌───────▼───────┐
+  │ attacker .36   openvpn .7        │           │ Browser →     │
+  └──────────────────────────────────┘           │ 10.128.0.29   │
+                                                 └───────────────┘
 ```
 
-See [docs/architecture.md](docs/architecture.md) for the full infrastructure topology. For step-by-step deployment and startup, see [docs/deployment.md](docs/deployment.md).
+See [docs/network.md](docs/network.md) for the full IP table, [docs/architecture.md](docs/architecture.md) for topology, and [docs/deployment.md](docs/deployment.md) for startup steps.
 
 ### Core Workflow
 
@@ -42,7 +36,7 @@ See [docs/architecture.md](docs/architecture.md) for the full infrastructure top
 3. The alert is normalized into a unified internal format and stored in PostgreSQL.
 4. A structured prompt is sent to LM Studio on the analyst's laptop via VPN.
 5. The LLM returns a structured JSON analysis back to the backend.
-6. The result is persisted and displayed to the analyst through the web UI (`core-compute:8000`).
+6. The result is persisted and displayed in the web UI at **`http://10.128.0.29:8000`** (via VPN).
 
 ## Tech Stack
 
@@ -72,7 +66,9 @@ LLM-AlertBridge/
 ├── .env.example                    # Environment variable template
 │
 ├── docs/
-│   └── architecture.md             # Infrastructure topology and data flow
+│   ├── architecture.md             # Infrastructure topology and data flow
+│   ├── network.md                  # Fixed internal IPv4 addresses (Yandex Cloud)
+│   └── deployment.md               # Deploy and start services
 │
 ├── backend/
 │   ├── app/
@@ -206,18 +202,18 @@ git clone <repo-url> && cd LLM-AlertBridge
 
 # Copy environment config
 cp .env.example .env
-# Edit .env: set LM_STUDIO_BASE_URL to your laptop's VPN IP,
-# set WAZUH_API_URL to localhost (Wazuh runs on the same host)
+# Edit .env: set LM_STUDIO_BASE_URL to your laptop's VPN IP (see .env.example)
 
-# Start everything (PostgreSQL + backend, auto-runs migrations)
+# Start everything (PostgreSQL + backend, auto-runs migrations).
+# API is published only on core-compute internal IP 10.128.0.29:8000 by default.
 docker compose up --build -d
 ```
 
 ### On the analyst laptop
 
-1. Connect to the cloud network via OpenVPN.
-2. Start LM Studio and load your model. Ensure the local server is running on port 1234.
-3. Open the web UI in your browser: `http://<core-compute-vpn-ip>:8000/alerts`
+1. Connect to the cloud network via OpenVPN (`openvpn-access-server` **10.128.0.7**).
+2. Start LM Studio and load your model. Ensure the local server is running on port 1234 and accepts connections from the VPN.
+3. Open the web UI: **`http://10.128.0.29:8000/alerts`**
 
 ### Local development (without cloud)
 
@@ -231,7 +227,7 @@ uv sync
 # Start PostgreSQL via Docker
 docker compose up db -d
 
-# Copy environment config and set LM_STUDIO_BASE_URL=http://localhost:1234/v1
+# Copy environment config; set ALERTBRIDGE_HTTP_PUBLISH=8000:8000 and LM_STUDIO_BASE_URL=http://127.0.0.1:1234/v1
 cp .env.example .env
 
 # Run database migrations
@@ -250,9 +246,10 @@ All configuration is managed via environment variables (see `.env.example`):
 
 | Variable              | Description                              | Default                    |
 |-----------------------|------------------------------------------|----------------------------|
-| `LM_STUDIO_BASE_URL`  | LM Studio API endpoint (laptop VPN IP)  | `http://localhost:1234/v1` |
+| `LM_STUDIO_BASE_URL`  | LM Studio on laptop (`http://<laptop-vpn-ip>:1234/v1`) | `http://YOUR_LAPTOP_VPN_IP:1234/v1` |
 | `LM_STUDIO_MODEL`     | Model identifier loaded in LM Studio    | —                          |
-| `WAZUH_API_URL`        | Wazuh manager API endpoint              | `https://localhost:55000`  |
+| `WAZUH_API_URL`        | Wazuh API from backend container        | `https://host.docker.internal:55000` |
+| `ALERTBRIDGE_HTTP_PUBLISH` | Docker `ports` mapping (optional)   | `10.128.0.29:8000:8000` (core-compute); use `8000:8000` on laptop |
 | `WAZUH_API_USER`       | Wazuh API username                      | —                          |
 | `WAZUH_API_PASSWORD`   | Wazuh API password                      | —                          |
 | `DATABASE_URL`         | SQLAlchemy database connection string   | `postgresql+asyncpg://alertbridge:alertbridge@localhost:5432/alertbridge` |

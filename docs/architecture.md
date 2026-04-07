@@ -53,14 +53,16 @@ LLM-AlertBridge is a research prototype for analyzing SOC/SIEM security alerts u
 
 ## Node Roles
 
-| Node | Role | Details |
-|------|------|---------|
-| `core-compute` | Backend + DB + Wazuh | Hosts the FastAPI backend, PostgreSQL, and Wazuh Manager. All services run in Docker Compose. The backend connects to LM Studio on the analyst's laptop via VPN. |
-| `target-1-compute` | Wazuh Agent (Linux host) | Monitored endpoint. Runs Wazuh agent reporting to core-compute. |
-| `target-2-compute` | Wazuh Agent (Linux host) | Second monitored endpoint for diverse alert scenarios. |
-| `attacker-compute` | Attack simulator | Generates security events against target hosts (SSH brute-force, file tampering, privilege escalation, web attacks). |
-| `openvpn-access-server` | VPN gateway | Provides secure connectivity between the analyst's laptop and the cloud internal network. |
-| Analyst laptop | LM Studio (Local LLM) | Runs the LLM locally via LM Studio to leverage Apple Silicon / GPU acceleration. Exposes an OpenAI-compatible API on port 1234. |
+Fixed internal IPv4 addresses (see [network.md](network.md)):
+
+| Node | Internal IP | Role |
+|------|-------------|------|
+| `core-compute` | **10.128.0.29** | Backend + DB + Wazuh manager; Docker Compose for AlertBridge |
+| `target-1-compute` | **10.128.0.35** | Wazuh agent |
+| `target-2-compute` | **10.128.0.14** | Wazuh agent |
+| `attacker-compute` | **10.128.0.36** | Attack / scenario simulation |
+| `openvpn-access-server` | **10.128.0.7** | VPN gateway |
+| Analyst laptop | *(your VPN IP)* | LM Studio only; set `LM_STUDIO_BASE_URL` in `.env` |
 
 ## Communication Model
 
@@ -68,7 +70,7 @@ LLM-AlertBridge is a research prototype for analyzing SOC/SIEM security alerts u
 - The **VPN tunnel** bridges the analyst's laptop into the cloud network.
 - **FastAPI backend** and **PostgreSQL** run on `core-compute` in Docker Compose, alongside the Wazuh Manager. The backend connects to Wazuh locally (same host) and reaches the LLM on the analyst's laptop via VPN.
 - **LM Studio** runs natively on the laptop (not in Docker) to leverage GPU/Apple Silicon acceleration. The backend on `core-compute` reaches it via the laptop's VPN IP on port 1234.
-- The analyst accesses the web UI by connecting to `core-compute:8000` through the VPN.
+- The analyst accesses the web UI at **`http://10.128.0.29:8000`** through the VPN (Docker publishes the API only on that internal address on `core-compute`).
 
 ## Data Flow
 

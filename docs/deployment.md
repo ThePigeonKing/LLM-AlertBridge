@@ -1,10 +1,10 @@
 # Deployment and startup guide
 
-This matches the intended topology: **PostgreSQL + FastAPI on `core-compute`**, **LM Studio only on your laptop**, **Wazuh on `core-compute`** (same VM as the stack or reachable from it). Traffic between laptop and cloud uses **OpenVPN**.
+This matches the intended topology: **PostgreSQL + FastAPI on `core-compute` (10.128.0.29)**, **LM Studio on your laptop** (you set its VPN IP in `.env`), **Wazuh on `core-compute`**. See [network.md](network.md) for all fixed internal addresses.
 
 ---
 
-## 1. One-time setup on `core-compute`
+## 1. One-time setup on `core-compute` (10.128.0.29)
 
 1. Install **Docker** and **Docker Compose** (plugin or standalone `docker compose`).
 2. Clone the repo and configure the environment:
@@ -18,11 +18,12 @@ cp .env.example .env
 
 | Variable | What to set |
 |----------|-------------|
-| `LM_STUDIO_BASE_URL` | `http://<YOUR_LAPTOP_VPN_IP>:1234/v1` — the IP your laptop gets on the VPN (not `localhost` from the server’s point of view). |
+| `LM_STUDIO_BASE_URL` | `http://<YOUR_LAPTOP_VPN_IP>:1234/v1` — replace `YOUR_LAPTOP_VPN_IP` with the address your Mac gets on OpenVPN. |
 | `LM_STUDIO_MODEL` | Exact model id as shown in LM Studio (must match the loaded model). |
-| `WAZUH_API_URL` | Usually `https://127.0.0.1:55000` if the Wazuh manager API is on the same host; use the real URL if Wazuh is elsewhere. |
+| `WAZUH_API_URL` | Default `https://host.docker.internal:55000` (works with `extra_hosts` in Compose). If not, try `https://10.128.0.29:55000`. |
 | `WAZUH_API_USER` / `WAZUH_API_PASSWORD` | Wazuh API credentials. |
 | `WAZUH_VERIFY_SSL` | `false` if you use the default self-signed cert. |
+| `ALERTBRIDGE_HTTP_PUBLISH` | Optional. Default in Compose is **`10.128.0.29:8000:8000`** (API only on internal IP). |
 
 Leave `DATABASE_URL` as in `.env.example` for **local** runs; **Docker Compose** overrides it to use the `db` service (`postgresql+asyncpg://alertbridge:alertbridge@db:5432/alertbridge`).
 
@@ -32,67 +33,64 @@ Leave `DATABASE_URL` as in `.env.example` for **local** runs; **Docker Compose**
 docker compose up --build -d
 ```
 
-5. Check health:
+5. Check health **on core-compute**:
 
 ```bash
-curl -s http://127.0.0.1:8000/health
+curl -s http://10.128.0.29:8000/health
 ```
 
 You should see `"database":"ok"`.
 
-6. **Firewall / security group:** allow TCP **8000** (and **5432** only if you need direct DB access) from the VPN subnet or from IPs that should reach the UI/API.
+6. **Yandex Cloud security group:** deny inbound **8000** and **5432** from `0.0.0.0/0`; allow **8000** from VPN / your subnet (e.g. `10.128.0.0/24`) only. Postgres is **not** published by Compose, so nothing listens on host **5432** for the database container.
 
 ---
 
 ## 2. Every time on your laptop
 
-1. **Connect OpenVPN** so you are on the same internal network as `core-compute`.
-2. **LM Studio**
-   - Load your model.
-   - Start the **local server** (default port **1234**).
-   - **Important:** the server must accept connections **from the VPN**, not only `127.0.0.1`. In LM Studio, enable serving on the LAN / all interfaces (or bind to `0.0.0.0`) so `core-compute` can reach `http://<laptop-vpn-ip>:1234`.
-3. **Browser:** open `http://<core-compute-internal-ip>:8000/alerts` (use the VM’s internal IP as you use for other cloud services).
+1. **Connect OpenVPN** (to `openvpn-access-server` at **10.128.0.7** on the internal network).
+2. **LM Studio** — load model, start server on **1234**, allow **LAN / all interfaces** so **10.128.0.29** can reach your laptop’s VPN IP.
+3. **Browser:** `http://10.128.0.29:8000/alerts`
 
-Optional: `http://<core-compute-internal-ip>:8000/docs` for the OpenAPI UI.
+Optional: `http://10.128.0.29:8000/docs` for OpenAPI.
 
 ---
 
 ## 3. Ingest alerts and run analysis
 
-1. On the alerts page, use **Sync from Wazuh** (or `POST /api/alerts/sync`) once Wazuh has alerts.
-2. Open an alert → **Analyze with LLM** (backend calls LM Studio on your laptop over VPN).
+1. On the alerts page, use **Sync from Wazuh** (or `POST /api/alerts/sync`).
+2. Open an alert → **Analyze with LLM**.
 
 ---
 
 ## 4. Useful commands on `core-compute`
 
 ```bash
-# Logs
 docker compose logs -f backend
-
-# Stop
 docker compose down
-
-# Stop and remove DB volume (wipes data)
-docker compose down -v
+docker compose down -v   # removes DB volume
 ```
 
 ---
 
-## 5. Optional: dev on one machine only
+## 5. Local development (laptop only)
 
-If everything runs on the same host (e.g. laptop + local Postgres in Docker + LM Studio on localhost):
+If you run Docker on your **laptop** (no `10.128.0.29` on this machine), set in `.env`:
+
+```bash
+ALERTBRIDGE_HTTP_PUBLISH=8000:8000
+LM_STUDIO_BASE_URL=http://127.0.0.1:1234/v1
+```
+
+Then:
 
 ```bash
 docker compose up db -d
-cp .env.example .env
-# LM_STUDIO_BASE_URL=http://127.0.0.1:1234/v1
 uv sync && uv run alembic upgrade head
 uv run python scripts/seed_alerts.py   # optional
 uv run uvicorn backend.app.main:app --reload --port 8000
 ```
 
-Note: `DATABASE_URL` in `.env` must point at Postgres (e.g. `postgresql+asyncpg://alertbridge:alertbridge@localhost:5432/alertbridge`) when not using the full `docker compose` stack for the backend.
+Or full stack with Compose using `ALERTBRIDGE_HTTP_PUBLISH=8000:8000`.
 
 ---
 
@@ -100,6 +98,7 @@ Note: `DATABASE_URL` in `.env` must point at Postgres (e.g. `postgresql+asyncpg:
 
 | Symptom | Check |
 |--------|--------|
-| `502` on analyze | LM Studio running? Model id correct? Laptop VPN IP correct in `LM_STUDIO_BASE_URL`? LM Studio listening on `0.0.0.0`, not only localhost? |
-| Sync fails | `WAZUH_API_URL`, credentials, SSL flag; from inside backend container/host, `curl` the Wazuh API. |
-| Cannot open UI from laptop | VPN up? Firewall on `core-compute` allows 8000 from VPN? Using **internal** IP of `core-compute`. |
+| `502` on analyze | LM Studio running? Laptop VPN IP in `LM_STUDIO_BASE_URL`? LM Studio listening on all interfaces? |
+| Sync fails | `WAZUH_API_URL`; from host: `curl -k https://127.0.0.1:55000/...` |
+| Cannot open UI | VPN up? Use **http://10.128.0.29:8000**? Security group allows 8000 from VPN? |
+| Docker bind error on laptop | Set `ALERTBRIDGE_HTTP_PUBLISH=8000:8000` — your machine has no `10.128.0.29`. |

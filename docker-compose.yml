@@ -1,3 +1,14 @@
+# Deploy on core-compute only (internal IPv4: 10.128.0.29).
+# Backend is published only on that address so it is not reachable via the VM's public IP
+# on port 8000 (adjust Yandex security groups as a second layer of defense).
+#
+# Cloud inventory (ru-central1-a, fixed internal IPs):
+#   core-compute           10.128.0.29
+#   target-1-compute       10.128.0.35
+#   target-2-compute       10.128.0.14
+#   attacker-compute       10.128.0.36
+#   openvpn-access-server  10.128.0.7
+
 services:
   db:
     image: postgres:16
@@ -5,8 +16,7 @@ services:
       POSTGRES_USER: alertbridge
       POSTGRES_PASSWORD: alertbridge
       POSTGRES_DB: alertbridge
-    ports:
-      - "5432:5432"
+    # Not published on the host: only the backend container can reach Postgres.
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -17,12 +27,15 @@ services:
 
   backend:
     build: .
+    # Default binds to core-compute internal IP only. For laptop dev: ALERTBRIDGE_HTTP_PUBLISH=8000:8000 in .env
     ports:
-      - "8000:8000"
+      - "${ALERTBRIDGE_HTTP_PUBLISH:-10.128.0.29:8000:8000}"
     env_file:
       - .env
     environment:
       DATABASE_URL: postgresql+asyncpg://alertbridge:alertbridge@db:5432/alertbridge
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       db:
         condition: service_healthy
