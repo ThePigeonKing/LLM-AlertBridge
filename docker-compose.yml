@@ -1,6 +1,6 @@
 # Deploy on core-compute only (internal IPv4: 10.128.0.29).
-# Backend is published only on that address so it is not reachable via the VM's public IP
-# on port 8000 (adjust Yandex security groups as a second layer of defense).
+# Backend and Wazuh agent/API/dashboard ports bind to that address by default so they
+# are not reachable via the VM's public IP (adjust Yandex security groups as a second layer).
 #
 # Cloud inventory (ru-central1-a, fixed internal IPs):
 #   core-compute           10.128.0.29
@@ -8,6 +8,9 @@
 #   target-2-compute       10.128.0.14
 #   attacker-compute       10.128.0.36
 #   openvpn-access-server  10.128.0.7
+#
+# Wazuh (single-node stack): generate TLS material once before first up — see docs/wazuh.md
+# Host prerequisite: vm.max_map_count >= 262144 (e.g. sysctl -w vm.max_map_count=262144).
 
 services:
   db:
@@ -16,7 +19,6 @@ services:
       POSTGRES_USER: alertbridge
       POSTGRES_PASSWORD: alertbridge
       POSTGRES_DB: alertbridge
-    # Not published on the host: only the backend container can reach Postgres.
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -25,15 +27,128 @@ services:
       timeout: 3s
       retries: 5
 
+  wazuh.indexer:
+    image: wazuh/wazuh-indexer:4.9.2
+    hostname: wazuh.indexer
+    restart: unless-stopped
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    environment:
+      - OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m
+    volumes:
+      - wazuh-indexer-data:/var/lib/wazuh-indexer
+      - ./deploy/wazuh/config/wazuh_indexer_ssl_certs/root-ca.pem:/usr/share/wazuh-indexer/certs/root-ca.pem
+      - ./deploy/wazuh/config/wazuh_indexer_ssl_certs/wazuh.indexer-key.pem:/usr/share/wazuh-indexer/certs/wazuh.indexer.key
+      - ./deploy/wazuh/config/wazuh_indexer_ssl_certs/wazuh.indexer.pem:/usr/share/wazuh-indexer/certs/wazuh.indexer.pem
+      - ./deploy/wazuh/config/wazuh_indexer_ssl_certs/admin.pem:/usr/share/wazuh-indexer/certs/admin.pem
+      - ./deploy/wazuh/config/wazuh_indexer_ssl_certs/admin-key.pem:/usr/share/wazuh-indexer/certs/admin-key.pem
+      - ./deploy/wazuh/config/wazuh_indexer/wazuh.indexer.yml:/usr/share/wazuh-indexer/opensearch.yml
+      - ./deploy/wazuh/config/wazuh_indexer/internal_users.yml:/usr/share/wazuh-indexer/opensearch-security/internal_users.yml
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sk https://localhost:9200 >/dev/null 2>&1 || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 30
+      start_period: 120s
+
+  wazuh.manager:
+    image: wazuh/wazuh-manager:4.9.2
+    hostname: wazuh.manager
+    restart: unless-stopped
+    depends_on:
+      wazuh.indexer:
+        condition: service_healthy
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 655360
+        hard: 655360
+    ports:
+      - "${WAZUH_PUBLISH_IP:-10.128.0.29}:1514:1514"
+      - "${WAZUH_PUBLISH_IP:-10.128.0.29}:1515:1515"
+      - "${WAZUH_PUBLISH_IP:-10.128.0.29}:514:514/udp"
+      - "${WAZUH_PUBLISH_IP:-10.128.0.29}:55000:55000"
+    environment:
+      - INDEXER_URL=https://wazuh.indexer:9200
+      - INDEXER_USERNAME=admin
+      - INDEXER_PASSWORD=SecretPassword
+      - FILEBEAT_SSL_VERIFICATION_MODE=full
+      - SSL_CERTIFICATE_AUTHORITIES=/etc/ssl/root-ca.pem
+      - SSL_CERTIFICATE=/etc/ssl/filebeat.pem
+      - SSL_KEY=/etc/ssl/filebeat.key
+      - API_USERNAME=${WAZUH_API_USER:-wazuh-wui}
+      - API_PASSWORD=${WAZUH_API_PASSWORD:-MyS3cr37P450r.*-}
+    volumes:
+      - wazuh_api_configuration:/var/ossec/api/configuration
+      - wazuh_etc:/var/ossec/etc
+      - wazuh_logs:/var/ossec/logs
+      - wazuh_queue:/var/ossec/queue
+      - wazuh_var_multigroups:/var/ossec/var/multigroups
+      - wazuh_integrations:/var/ossec/integrations
+      - wazuh_active_response:/var/ossec/active-response/bin
+      - wazuh_agentless:/var/ossec/agentless
+      - wazuh_wodles:/var/ossec/wodles
+      - filebeat_etc:/etc/filebeat
+      - filebeat_var:/var/lib/filebeat
+      - ./deploy/wazuh/config/wazuh_indexer_ssl_certs/root-ca-manager.pem:/etc/ssl/root-ca.pem
+      - ./deploy/wazuh/config/wazuh_indexer_ssl_certs/wazuh.manager.pem:/etc/ssl/filebeat.pem
+      - ./deploy/wazuh/config/wazuh_indexer_ssl_certs/wazuh.manager-key.pem:/etc/ssl/filebeat.key
+      - ./deploy/wazuh/config/wazuh_cluster/wazuh_manager.conf:/wazuh-config-mount/etc/ossec.conf
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -sk -u $$API_USERNAME:$$API_PASSWORD -X POST https://127.0.0.1:55000/security/user/authenticate?raw=true -f -o /dev/null -s",
+        ]
+      interval: 20s
+      timeout: 10s
+      retries: 25
+      start_period: 180s
+
+  wazuh.dashboard:
+    image: wazuh/wazuh-dashboard:4.9.2
+    hostname: wazuh.dashboard
+    restart: unless-stopped
+    depends_on:
+      wazuh.indexer:
+        condition: service_healthy
+      wazuh.manager:
+        condition: service_healthy
+    ports:
+      - "${WAZUH_PUBLISH_IP:-10.128.0.29}:8443:5601"
+    environment:
+      - INDEXER_USERNAME=admin
+      - INDEXER_PASSWORD=SecretPassword
+      - WAZUH_API_URL=https://wazuh.manager
+      - DASHBOARD_USERNAME=kibanaserver
+      - DASHBOARD_PASSWORD=kibanaserver
+      - API_USERNAME=${WAZUH_API_USER:-wazuh-wui}
+      - API_PASSWORD=${WAZUH_API_PASSWORD:-MyS3cr37P450r.*-}
+    volumes:
+      - ./deploy/wazuh/config/wazuh_indexer_ssl_certs/wazuh.dashboard.pem:/usr/share/wazuh-dashboard/certs/wazuh-dashboard.pem
+      - ./deploy/wazuh/config/wazuh_indexer_ssl_certs/wazuh.dashboard-key.pem:/usr/share/wazuh-dashboard/certs/wazuh-dashboard-key.pem
+      - ./deploy/wazuh/config/wazuh_indexer_ssl_certs/root-ca.pem:/usr/share/wazuh-dashboard/certs/root-ca.pem
+      - ./deploy/wazuh/config/wazuh_dashboard/opensearch_dashboards.yml:/usr/share/wazuh-dashboard/config/opensearch_dashboards.yml
+      - ./deploy/wazuh/config/wazuh_dashboard/wazuh.yml:/usr/share/wazuh-dashboard/data/wazuh/config/wazuh.yml
+      - wazuh-dashboard-config:/usr/share/wazuh-dashboard/data/wazuh/config
+      - wazuh-dashboard-custom:/usr/share/wazuh-dashboard/plugins/wazuh/public/assets/custom
+
   backend:
     build: .
-    # Default binds to core-compute internal IP only. For laptop dev: ALERTBRIDGE_HTTP_PUBLISH=8000:8000 in .env
     ports:
       - "${ALERTBRIDGE_HTTP_PUBLISH:-10.128.0.29:8000:8000}"
     env_file:
       - .env
     environment:
       DATABASE_URL: postgresql+asyncpg://alertbridge:alertbridge@db:5432/alertbridge
+      WAZUH_API_URL: https://wazuh.manager:55000
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
@@ -49,3 +164,17 @@ services:
 
 volumes:
   pgdata:
+  wazuh_api_configuration:
+  wazuh_etc:
+  wazuh_logs:
+  wazuh_queue:
+  wazuh_var_multigroups:
+  wazuh_integrations:
+  wazuh_active_response:
+  wazuh_agentless:
+  wazuh_wodles:
+  filebeat_etc:
+  filebeat_var:
+  wazuh-indexer-data:
+  wazuh-dashboard-config:
+  wazuh-dashboard-custom:

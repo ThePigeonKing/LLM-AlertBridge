@@ -57,7 +57,7 @@ Fixed internal IPv4 addresses (see [network.md](network.md)):
 
 | Node | Internal IP | Role |
 |------|-------------|------|
-| `core-compute` | **10.128.0.29** | Backend + DB + Wazuh manager; Docker Compose for AlertBridge |
+| `core-compute` | **10.128.0.29** | Backend + DB + Wazuh stack (indexer, manager, dashboard) via Docker Compose |
 | `target-1-compute` | **10.128.0.35** | Wazuh agent |
 | `target-2-compute` | **10.128.0.14** | Wazuh agent |
 | `attacker-compute` | **10.128.0.36** | Attack / scenario simulation |
@@ -69,7 +69,7 @@ Fixed internal IPv4 addresses (see [network.md](network.md)):
 - All cloud nodes communicate via **internal IPv4 addresses** (stable, used as primary addressing).
 - The **VPN tunnel** bridges the analyst's laptop into the cloud network.
 - **FastAPI backend** and **PostgreSQL** run on `core-compute` in Docker Compose, alongside the Wazuh Manager. The backend connects to Wazuh locally (same host) and reaches the LLM on the analyst's laptop via VPN.
-- **LM Studio** runs natively on the laptop (not in Docker) to leverage GPU/Apple Silicon acceleration. The backend on `core-compute` reaches it via the laptop's VPN IP on port 1234.
+- **LM Studio** runs on the laptop (not in Docker). The backend on `core-compute` reaches it either via the **laptop’s VPN client IP** and LM Studio’s port (often 1234), or via an **SSH tunnel** that exposes LM Studio on a reachable internal address (e.g. the OpenVPN server).
 - The analyst accesses the web UI at **`http://10.128.0.29:8000`** through the VPN (Docker publishes the API only on that internal address on `core-compute`).
 
 ## Data Flow

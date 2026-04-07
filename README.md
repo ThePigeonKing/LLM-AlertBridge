@@ -68,7 +68,8 @@ LLM-AlertBridge/
 ├── docs/
 │   ├── architecture.md             # Infrastructure topology and data flow
 │   ├── network.md                  # Fixed internal IPv4 addresses (Yandex Cloud)
-│   └── deployment.md               # Deploy and start services
+│   ├── deployment.md               # Deploy and start services
+│   └── wazuh.md                    # Wazuh is separate; how to deploy it
 │
 ├── backend/
 │   ├── app/

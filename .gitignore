@@ -5,6 +5,9 @@
 data/*.db
 data/*.sqlite
 
+# Wazuh Docker: generated TLS certs (see docker-compose.wazuh-certs.yml)
+deploy/wazuh/config/wazuh_indexer_ssl_certs/*.pem
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]

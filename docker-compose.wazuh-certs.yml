@@ -1,0 +1,13 @@
+# One-shot TLS material for the Wazuh stack in docker-compose.yml.
+# Run from the repository root:
+#   docker compose -f docker-compose.wazuh-certs.yml run --rm generator
+#
+# Requires deploy/wazuh/config/certs.yml (node names must match Compose service hostnames).
+
+services:
+  generator:
+    image: wazuh/wazuh-certs-generator:0.0.2
+    hostname: wazuh-certs-generator
+    volumes:
+      - ./deploy/wazuh/config/wazuh_indexer_ssl_certs:/certificates
+      - ./deploy/wazuh/config/certs.yml:/config/certs.yml

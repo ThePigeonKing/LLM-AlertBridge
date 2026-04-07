@@ -10,7 +10,7 @@ All VMs are in **ru-central1-a** on subnet **10.128.0.0/24**.
 | `attacker-compute`      | **10.128.0.36**| Attack / scenario simulation              |
 | `openvpn-access-server` | **10.128.0.7** | VPN gateway for laptop access             |
 
-**Analyst laptop:** set your own VPN address in `.env` as `LM_STUDIO_BASE_URL` (see `.env.example`).
+**LM Studio:** in `.env`, set `LM_STUDIO_BASE_URL` to whatever **core-compute** can reach—the laptop’s **VPN client IP** (LM Studio on **:1234**), or an **SSH tunnel** endpoint (e.g. **10.128.0.7:8080** on `openvpn-access-server`). See [deployment.md](deployment.md).
 
 **AlertBridge UI (after VPN):** `http://10.128.0.29:8000/alerts`
 
