@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Not Found — LLM-AlertBridge{% endblock %}
+
+{% block content %}
+<div class="text-center py-20">
+    <h1 class="text-4xl font-bold text-soc-muted mb-4">404</h1>
+    <p class="text-soc-muted">{{ message | default('Page not found') }}</p>
+    <a href="/alerts" class="inline-block mt-6 px-4 py-2 bg-soc-card border border-soc-border rounded-lg hover:bg-slate-700 transition-colors">
+        Back to alerts
+    </a>
+</div>
+{% endblock %}

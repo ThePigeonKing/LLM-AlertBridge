@@ -1,0 +1,13 @@
+Analyze the following security alert from Wazuh SIEM.
+
+== Alert Metadata ==
+Rule ID: {rule_id}
+Rule Description: {rule_description}
+Severity Level: {severity}
+Source Agent: {agent_name}
+Timestamp: {timestamp}
+
+== Alert Data ==
+{alert_data}
+
+Provide a structured JSON analysis of this alert following the required format.

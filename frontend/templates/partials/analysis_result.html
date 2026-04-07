@@ -1,0 +1,62 @@
+<div class="space-y-4 text-sm">
+    <div>
+        <h3 class="text-xs font-semibold uppercase text-soc-muted tracking-wider mb-1">Summary</h3>
+        <p>{{ analysis.summary }}</p>
+    </div>
+
+    <div>
+        <h3 class="text-xs font-semibold uppercase text-soc-muted tracking-wider mb-1">Hypothesis</h3>
+        <p>{{ analysis.hypothesis }}</p>
+    </div>
+
+    {% if analysis.possible_causes %}
+    <div>
+        <h3 class="text-xs font-semibold uppercase text-soc-muted tracking-wider mb-1">Possible Causes</h3>
+        <ul class="list-disc list-inside space-y-1 text-soc-text">
+            {% for cause in analysis.possible_causes %}
+            <li>{{ cause }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    {% if analysis.key_indicators %}
+    <div>
+        <h3 class="text-xs font-semibold uppercase text-soc-muted tracking-wider mb-1">Key Indicators</h3>
+        <ul class="space-y-1">
+            {% for indicator in analysis.key_indicators %}
+            <li class="flex items-start gap-2">
+                <span class="text-yellow-400 mt-0.5">&#9679;</span>
+                <span>{{ indicator }}</span>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    {% if analysis.recommended_checks %}
+    <div>
+        <h3 class="text-xs font-semibold uppercase text-soc-muted tracking-wider mb-1">Recommended Checks</h3>
+        <ol class="list-decimal list-inside space-y-1 text-soc-text">
+            {% for check in analysis.recommended_checks %}
+            <li>{{ check }}</li>
+            {% endfor %}
+        </ol>
+    </div>
+    {% endif %}
+
+    <div class="border-t border-soc-border pt-3">
+        <h3 class="text-xs font-semibold uppercase text-soc-muted tracking-wider mb-1">Confidence</h3>
+        <p class="text-soc-muted italic">{{ analysis.confidence_note }}</p>
+    </div>
+
+    <div class="border-t border-soc-border pt-3 text-xs text-soc-muted">
+        <span>Model: {{ analysis.model_name }}</span>
+        <span class="mx-2">|</span>
+        <span>{{ analysis.processing_time_ms }}ms</span>
+        {% if analysis.prompt_tokens %}
+        <span class="mx-2">|</span>
+        <span>{{ analysis.prompt_tokens }} + {{ analysis.completion_tokens }} tokens</span>
+        {% endif %}
+    </div>
+</div>

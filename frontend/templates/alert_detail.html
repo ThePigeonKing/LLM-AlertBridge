@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block title %}Alert {{ alert.rule_id }} — LLM-AlertBridge{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <a href="/alerts" class="text-sm text-soc-muted hover:text-white transition-colors">&larr; Back to alerts</a>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Alert Metadata -->
+    <div class="bg-soc-card border border-soc-border rounded-lg p-6">
+        <h2 class="text-lg font-bold mb-4">Alert Details</h2>
+
+        <div class="space-y-3 text-sm">
+            <div class="flex justify-between">
+                <span class="text-soc-muted">Rule ID</span>
+                <span class="font-mono">{{ alert.rule_id }}</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-soc-muted">Description</span>
+                <span class="text-right max-w-xs">{{ alert.rule_description }}</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-soc-muted">Severity</span>
+                <span>
+                    {% if alert.severity == 'critical' %}
+                        <span class="px-2 py-0.5 text-xs font-bold rounded bg-red-600/20 text-red-400 border border-red-600/30">CRITICAL</span>
+                    {% elif alert.severity == 'high' %}
+                        <span class="px-2 py-0.5 text-xs font-bold rounded bg-orange-600/20 text-orange-400 border border-orange-600/30">HIGH</span>
+                    {% elif alert.severity == 'medium' %}
+                        <span class="px-2 py-0.5 text-xs font-bold rounded bg-yellow-600/20 text-yellow-400 border border-yellow-600/30">MEDIUM</span>
+                    {% elif alert.severity == 'low' %}
+                        <span class="px-2 py-0.5 text-xs font-bold rounded bg-blue-600/20 text-blue-400 border border-blue-600/30">LOW</span>
+                    {% else %}
+                        <span class="px-2 py-0.5 text-xs font-bold rounded bg-slate-600/20 text-slate-400 border border-slate-600/30">INFO</span>
+                    {% endif %}
+                </span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-soc-muted">Agent</span>
+                <span>{{ alert.agent_name }}</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-soc-muted">Status</span>
+                <span>
+                    {% if alert.status.value == 'completed' %}
+                        <span class="text-green-400">Analyzed</span>
+                    {% elif alert.status.value == 'analyzing' %}
+                        <span class="text-yellow-400">Analyzing...</span>
+                    {% elif alert.status.value == 'failed' %}
+                        <span class="text-red-400">Failed</span>
+                    {% else %}
+                        <span class="text-soc-muted">Pending</span>
+                    {% endif %}
+                </span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-soc-muted">Created</span>
+                <span>{{ alert.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</span>
+            </div>
+        </div>
+
+        <!-- Raw Data (collapsible) -->
+        <details class="mt-6">
+            <summary class="text-sm text-soc-muted cursor-pointer hover:text-white transition-colors">
+                Raw Alert Data
+            </summary>
+            <pre class="mt-2 p-3 bg-slate-900 border border-soc-border rounded text-xs overflow-x-auto max-h-64 overflow-y-auto"><code>{{ alert.raw_data | tojson(indent=2) }}</code></pre>
+        </details>
+
+        <details class="mt-3">
+            <summary class="text-sm text-soc-muted cursor-pointer hover:text-white transition-colors">
+                Normalized Data
+            </summary>
+            <pre class="mt-2 p-3 bg-slate-900 border border-soc-border rounded text-xs overflow-x-auto max-h-64 overflow-y-auto"><code>{{ alert.normalized_data | tojson(indent=2) }}</code></pre>
+        </details>
+    </div>
+
+    <!-- Analysis Panel -->
+    <div>
+        <div class="bg-soc-card border border-soc-border rounded-lg p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-bold">LLM Analysis</h2>
+                {% if not analysis %}
+                <button
+                    hx-post="/api/alerts/{{ alert.id }}/analyze"
+                    hx-target="#analysis-content"
+                    hx-indicator="#analyze-spinner"
+                    class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg transition-colors"
+                >
+                    <span id="analyze-spinner" class="htmx-indicator inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full spinner mr-2"></span>
+                    Analyze with LLM
+                </button>
+                {% endif %}
+            </div>
+
+            <div id="analysis-content">
+                {% if analysis %}
+                    {% include "partials/analysis_result.html" %}
+                {% else %}
+                    <p class="text-soc-muted text-sm">No analysis yet. Click the button above to run LLM analysis.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

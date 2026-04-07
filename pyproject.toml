@@ -1,0 +1,41 @@
+[project]
+name = "llm-alertbridge"
+version = "0.1.0"
+description = "SOC/SIEM alert analysis system using a locally deployed LLM"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi[standard]",
+    "uvicorn[standard]",
+    "sqlalchemy[asyncio]",
+    "asyncpg",
+    "alembic",
+    "openai",
+    "pydantic-settings",
+    "jinja2",
+    "httpx",
+    "python-multipart",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-asyncio",
+    "ruff",
+]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+exclude = ["backend/app/db/migrations/versions/"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "UP", "B", "SIM"]
+ignore = ["B008"]
+
+[tool.ruff.lint.per-file-ignores]
+"scripts/*" = ["E501"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["backend/tests"]

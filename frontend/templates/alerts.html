@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}Alerts — LLM-AlertBridge{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-bold">Security Alerts</h1>
+    <div class="flex items-center gap-3">
+        <span class="text-sm text-soc-muted">{{ total }} alert{{ 's' if total != 1 else '' }}</span>
+        <button
+            hx-post="/api/alerts/sync"
+            hx-target="#sync-status"
+            hx-indicator="#sync-spinner"
+            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
+        >
+            <span id="sync-spinner" class="htmx-indicator inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full spinner mr-2"></span>
+            Sync from Wazuh
+        </button>
+    </div>
+</div>
+
+<div id="sync-status" class="mb-4"></div>
+
+{% if alerts %}
+<div class="bg-soc-card border border-soc-border rounded-lg overflow-hidden">
+    <table class="w-full text-sm">
+        <thead>
+            <tr class="border-b border-soc-border text-soc-muted text-left">
+                <th class="px-4 py-3 font-medium">Severity</th>
+                <th class="px-4 py-3 font-medium">Rule</th>
+                <th class="px-4 py-3 font-medium">Description</th>
+                <th class="px-4 py-3 font-medium">Agent</th>
+                <th class="px-4 py-3 font-medium">Status</th>
+                <th class="px-4 py-3 font-medium">Time</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for alert in alerts %}
+            <tr class="border-b border-soc-border hover:bg-slate-800/50 cursor-pointer transition-colors"
+                onclick="window.location='/alerts/{{ alert.id }}'">
+                <td class="px-4 py-3">
+                    {% if alert.severity == 'critical' %}
+                        <span class="inline-block px-2 py-0.5 text-xs font-bold rounded bg-red-600/20 text-red-400 border border-red-600/30">CRITICAL</span>
+                    {% elif alert.severity == 'high' %}
+                        <span class="inline-block px-2 py-0.5 text-xs font-bold rounded bg-orange-600/20 text-orange-400 border border-orange-600/30">HIGH</span>
+                    {% elif alert.severity == 'medium' %}
+                        <span class="inline-block px-2 py-0.5 text-xs font-bold rounded bg-yellow-600/20 text-yellow-400 border border-yellow-600/30">MEDIUM</span>
+                    {% elif alert.severity == 'low' %}
+                        <span class="inline-block px-2 py-0.5 text-xs font-bold rounded bg-blue-600/20 text-blue-400 border border-blue-600/30">LOW</span>
+                    {% else %}
+                        <span class="inline-block px-2 py-0.5 text-xs font-bold rounded bg-slate-600/20 text-slate-400 border border-slate-600/30">INFO</span>
+                    {% endif %}
+                </td>
+                <td class="px-4 py-3 font-mono text-soc-muted">{{ alert.rule_id }}</td>
+                <td class="px-4 py-3">{{ alert.rule_description | truncate(80) }}</td>
+                <td class="px-4 py-3 text-soc-muted">{{ alert.agent_name }}</td>
+                <td class="px-4 py-3">
+                    {% if alert.status.value == 'completed' %}
+                        <span class="text-green-400">Analyzed</span>
+                    {% elif alert.status.value == 'analyzing' %}
+                        <span class="text-yellow-400">Analyzing...</span>
+                    {% elif alert.status.value == 'failed' %}
+                        <span class="text-red-400">Failed</span>
+                    {% else %}
+                        <span class="text-soc-muted">Pending</span>
+                    {% endif %}
+                </td>
+                <td class="px-4 py-3 text-soc-muted whitespace-nowrap">
+                    {{ alert.created_at.strftime('%Y-%m-%d %H:%M') }}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if total_pages > 1 %}
+<div class="flex justify-center gap-2 mt-6">
+    {% if page > 1 %}
+        <a href="/alerts?page={{ page - 1 }}" class="px-3 py-1 bg-soc-card border border-soc-border rounded hover:bg-slate-700 transition-colors">Prev</a>
+    {% endif %}
+    <span class="px-3 py-1 text-soc-muted">Page {{ page }} of {{ total_pages }}</span>
+    {% if page < total_pages %}
+        <a href="/alerts?page={{ page + 1 }}" class="px-3 py-1 bg-soc-card border border-soc-border rounded hover:bg-slate-700 transition-colors">Next</a>
+    {% endif %}
+</div>
+{% endif %}
+
+{% else %}
+<div class="bg-soc-card border border-soc-border rounded-lg p-12 text-center">
+    <p class="text-soc-muted text-lg">No alerts yet.</p>
+    <p class="text-soc-muted text-sm mt-2">Click "Sync from Wazuh" to fetch alerts, or seed sample data.</p>
+</div>
+{% endif %}
+{% endblock %}
