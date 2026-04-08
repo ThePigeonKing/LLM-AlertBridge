@@ -25,6 +25,9 @@ class LMStudioClient:
         """
         logger.info("Sending analysis request to LM Studio (model=%s)", self._model)
 
+        # LM Studio rejects OpenAI's response_format.type "json_object" (400: must be
+        # "json_schema" or "text"). We rely on the prompt for JSON; parse_llm_response
+        # accepts raw JSON or ```json``` fences.
         response = self._client.chat.completions.create(
             model=self._model,
             messages=[
@@ -32,7 +35,6 @@ class LMStudioClient:
                 {"role": "user", "content": user_prompt},
             ],
             temperature=0.3,
-            response_format={"type": "json_object"},
         )
 
         choice = response.choices[0]
