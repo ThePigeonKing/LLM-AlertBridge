@@ -58,7 +58,7 @@ docker compose up --build -d
 
 - Indexer **`admin`**: **`SecretPassword`** (see `internal_users.yml` demo hashes).
 - Dashboard OpenSearch user **`kibanaserver`**: **`kibanaserver`**.
-- Wazuh API user (Compose **`API_USERNAME`**, default **`wazuh-wui`**): **`WAZUH_API_PASSWORD`** in `.env`, default **`MyS3cr37P450r.*-`** — must match **`deploy/wazuh/config/wazuh_dashboard/wazuh.yml`** `password` and the manager’s API password.
+- Wazuh API user (Compose **`API_USERNAME`**, default **`wazuh-wui`**): **`WAZUH_API_PASSWORD`** in `.env` (optional; if unset, Compose uses default **`MyS3cr37P450r.*-`**). Password must satisfy Wazuh’s strength rules (see troubleshooting below). It must match **`deploy/wazuh/config/wazuh_dashboard/wazuh.yml`** `password` and the manager’s API password.
 
 The **backend** container uses **`WAZUH_API_URL=https://wazuh.manager:55000`** (set in Compose). **`WAZUH_VERIFY_SSL=false`** is typical with the demo certs.
 
@@ -80,6 +80,14 @@ curl -sk -u wazuh-wui:'MyS3cr37P450r.*-' \
 ```
 
 You should get a JWT. From inside the **backend** container the same URL is **`https://wazuh.manager:55000`**.
+
+---
+
+## Error 5007 — “Insecure user password provided” (manager logs)
+
+Compose substitutes **`API_PASSWORD`** from **`WAZUH_API_PASSWORD`** in the project **`.env`** (if present). Wazuh enforces **8–64 characters** with at least one **uppercase**, **lowercase**, **digit**, and **non-alphanumeric** symbol (see `framework/wazuh/security.py` in Wazuh). Generic placeholders like **`changeme`** fail and abort API user setup; the manager container may then exit messily (s6 / filebeat errors).
+
+**Fix:** Set a compliant `WAZUH_API_PASSWORD` in `.env`, set the same value in **`deploy/wazuh/config/wazuh_dashboard/wazuh.yml`** (`password:`), then recreate **`wazuh.manager`** and **`wazuh.dashboard`**. If a failed first run left bad state, remove the **`wazuh_api_configuration`** named volume only after you understand that API config will be reset.
 
 ---
 

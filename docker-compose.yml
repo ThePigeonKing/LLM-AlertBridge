@@ -86,6 +86,8 @@ services:
       - SSL_CERTIFICATE=/etc/ssl/filebeat.pem
       - SSL_KEY=/etc/ssl/filebeat.key
       - API_USERNAME=${WAZUH_API_USER:-wazuh-wui}
+      # WAZUH_API_PASSWORD comes from project .env if set (compose interpolation). Wazuh rejects
+      # weak values (error 5007): 8–64 chars, upper + lower + digit + symbol. e.g. "changeme" fails.
       - API_PASSWORD=${WAZUH_API_PASSWORD:-MyS3cr37P450r.*-}
     volumes:
       - wazuh_api_configuration:/var/ossec/api/configuration
@@ -132,6 +134,7 @@ services:
       - DASHBOARD_USERNAME=kibanaserver
       - DASHBOARD_PASSWORD=kibanaserver
       - API_USERNAME=${WAZUH_API_USER:-wazuh-wui}
+      # Same WAZUH_API_PASSWORD as wazuh.manager (must match wazuh.yml).
       - API_PASSWORD=${WAZUH_API_PASSWORD:-MyS3cr37P450r.*-}
     volumes:
       - ./deploy/wazuh/config/wazuh_indexer_ssl_certs/wazuh.dashboard.pem:/usr/share/wazuh-dashboard/certs/wazuh-dashboard.pem
@@ -151,6 +154,9 @@ services:
     environment:
       DATABASE_URL: postgresql+asyncpg://alertbridge:alertbridge@db:5432/alertbridge
       WAZUH_API_URL: https://wazuh.manager:55000
+      WAZUH_INDEXER_URL: https://wazuh.indexer:9200
+      WAZUH_INDEXER_USER: admin
+      WAZUH_INDEXER_PASSWORD: SecretPassword
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:

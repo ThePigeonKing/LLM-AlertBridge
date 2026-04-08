@@ -12,11 +12,16 @@ class Settings(BaseSettings):
     lm_studio_base_url: str = "http://localhost:1234/v1"
     lm_studio_model: str = ""
 
-    # Wazuh
+    # Wazuh Manager API (agent management, auth healthcheck)
     wazuh_api_url: str = ""
     wazuh_api_user: str = ""
     wazuh_api_password: str = ""
     wazuh_verify_ssl: bool = False
+
+    # Wazuh Indexer (OpenSearch) — alerts live here, not in the manager API
+    wazuh_indexer_url: str = ""
+    wazuh_indexer_user: str = "admin"
+    wazuh_indexer_password: str = "SecretPassword"
 
     # Database
     database_url: str = "postgresql+asyncpg://alertbridge:alertbridge@localhost:5432/alertbridge"

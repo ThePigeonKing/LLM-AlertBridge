@@ -48,7 +48,7 @@ cp .env.example .env
 | `LM_STUDIO_BASE_URL` | Laptop VPN IP + LM Studio port, **or** tunnel endpoint (e.g. `http://10.128.0.7:8080/v1` if SSH exposes LM Studio on the OpenVPN host). Must end with `/v1`. |
 | `LM_STUDIO_MODEL` | Exact model id as shown in LM Studio (must match the loaded model). |
 | `WAZUH_API_URL` | Compose sets **`https://wazuh.manager:55000`** for the backend container. For local `uvicorn` without Compose, use e.g. `https://10.128.0.29:55000`. |
-| `WAZUH_API_USER` / `WAZUH_API_PASSWORD` | Must match the Wazuh manager API and `deploy/wazuh/config/wazuh_dashboard/wazuh.yml` if you change defaults. |
+| `WAZUH_API_USER` / `WAZUH_API_PASSWORD` | Must match the Wazuh manager API and `deploy/wazuh/config/wazuh_dashboard/wazuh.yml`. If set, the password must meet Wazuh strength rules (see [wazuh.md](wazuh.md#error-5007--insecure-user-password-provided-manager-logs)); weak values like `changeme` cause error **5007**. |
 | `WAZUH_VERIFY_SSL` | `false` with the generated demo certs. |
 | `WAZUH_PUBLISH_IP` | Optional. Default **`10.128.0.29`** for agent/API/dashboard ports. On a laptop: **`127.0.0.1`**. |
 | `ALERTBRIDGE_HTTP_PUBLISH` | Optional. Default in Compose is **`10.128.0.29:8000:8000`** (API only on internal IP). |
