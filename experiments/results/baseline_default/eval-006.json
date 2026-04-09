@@ -1,0 +1,73 @@
+{
+  "alert_id": "eval-006",
+  "category": "privilege_escalation",
+  "ground_truth": {
+    "is_true_positive": false,
+    "expected_severity": "low",
+    "expected_response": "monitor",
+    "expected_key_indicators": [
+      "sudo to root",
+      "developer",
+      "/bin/bash"
+    ],
+    "expected_mitre_tactic": "Privilege Escalation",
+    "notes": "Routine admin sudo, likely benign"
+  },
+  "mode": "baseline",
+  "model": "baseline_rules",
+  "result": {
+    "summary": "[Baseline] Successful sudo to ROOT executed. on target-1-compute",
+    "hypothesis": "Rule-based assessment: Successful sudo to ROOT executed.. Severity info suggests monitor action.",
+    "possible_causes": [
+      "Successful sudo to ROOT executed.",
+      "MITRE ATT&CK tactic: Privilege Escalation"
+    ],
+    "key_indicators": [
+      "Target user: root",
+      "MITRE techniques: T1548.003",
+      "Log excerpt: Apr  6 16:45:02 target-1 sudo: developer : TTY=pts/0 ; PWD=/home/developer ; USER=root ; COMMAND=/bin/bash"
+    ],
+    "recommended_checks": [
+      "Verify the sudo action was expected",
+      "Check the command executed with elevated privileges",
+      "Review recent sudo usage by the same user"
+    ],
+    "confidence_note": "Low confidence — rule-based baseline without LLM contextual analysis. This assessment uses only Wazuh metadata and predefined heuristics.",
+    "criticality": {
+      "score": 1,
+      "level": "info",
+      "justification": "Based on Wazuh rule level (3), severity mapping: info → info",
+      "contributing_factors": [
+        "Wazuh rule level: 3",
+        "Rule groups: syslog, sudo",
+        "MITRE tactics: Privilege Escalation"
+      ]
+    },
+    "response": {
+      "action": "monitor",
+      "urgency": "scheduled",
+      "specific_steps": [
+        "Verify the sudo action was expected",
+        "Check the command executed with elevated privileges",
+        "Review recent sudo usage by the same user"
+      ],
+      "escalation_needed": false,
+      "escalation_reason": null
+    }
+  },
+  "raw_response": "[baseline]",
+  "latency_ms": 0,
+  "prompt_tokens": 0,
+  "completion_tokens": 0,
+  "schema_valid": true,
+  "scores": {
+    "severity_match": false,
+    "response_match": true,
+    "indicator_coverage": 1.0,
+    "false_positive_correct": true,
+    "predicted_severity": "info",
+    "expected_severity": "low",
+    "predicted_action": "monitor",
+    "expected_action": "monitor"
+  }
+}

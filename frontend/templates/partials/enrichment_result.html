@@ -1,0 +1,48 @@
+<div class="space-y-3 text-sm">
+    <div class="flex items-center justify-between text-xs text-soc-muted">
+        <span>Host: <span class="font-mono text-soc-text">{{ enrichment.host }}</span></span>
+        <span>{{ enrichment.created_at.strftime('%H:%M:%S') }}</span>
+    </div>
+
+    {% if enrichment.queries_failed %}
+    <div class="text-xs text-yellow-400">
+        Partial: {{ enrichment.queries_failed | length }} query(ies) failed
+    </div>
+    {% endif %}
+
+    {% for query_name, rows in enrichment.data.items() %}
+    <details{% if loop.first %} open{% endif %}>
+        <summary class="text-xs text-soc-muted cursor-pointer hover:text-white transition-colors font-mono">
+            {{ query_name }}
+            <span class="text-slate-500">({{ rows | length if rows is iterable and rows is not string else 0 }} rows)</span>
+        </summary>
+        {% if rows and rows is iterable and rows is not string %}
+        <div class="mt-1 overflow-x-auto max-h-48 overflow-y-auto">
+            <table class="w-full text-xs">
+                <thead>
+                    <tr class="border-b border-soc-border text-soc-muted text-left">
+                        {% for key in rows[0].keys() %}
+                        <th class="px-2 py-1 font-medium">{{ key }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in rows[:10] %}
+                    <tr class="border-b border-slate-800">
+                        {% for val in row.values() %}
+                        <td class="px-2 py-1 max-w-[200px] truncate" title="{{ val }}">{{ val }}</td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                    {% if rows | length > 10 %}
+                    <tr><td colspan="100" class="px-2 py-1 text-soc-muted italic">... {{ rows | length - 10 }} more rows</td></tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="mt-1 text-xs text-soc-muted italic">No data</p>
+        {% endif %}
+    </details>
+    {% endfor %}
+</div>

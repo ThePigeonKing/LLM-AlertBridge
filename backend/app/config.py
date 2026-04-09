@@ -26,6 +26,15 @@ class Settings(BaseSettings):
     # Database
     database_url: str = "postgresql+asyncpg://alertbridge:alertbridge@localhost:5432/alertbridge"
 
+    # osquery
+    osquery_transport: str = "mock"  # "ssh" | "mock"
+    osquery_ssh_user: str = "root"
+    osquery_ssh_key_path: str = ""
+    osquery_ssh_timeout: int = 10
+
+    # Correlation
+    correlation_time_window_minutes: int = 15
+
     # Application
     log_level: str = "INFO"
 

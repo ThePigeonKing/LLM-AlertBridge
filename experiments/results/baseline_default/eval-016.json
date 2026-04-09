@@ -1,0 +1,69 @@
+{
+  "alert_id": "eval-016",
+  "category": "web_attack",
+  "ground_truth": {
+    "is_true_positive": true,
+    "expected_severity": "high",
+    "expected_response": "contain",
+    "expected_key_indicators": [
+      "SQL injection",
+      "OR '1'='1",
+      "500 error"
+    ],
+    "expected_mitre_tactic": "Initial Access",
+    "notes": "SQL injection causing server error"
+  },
+  "mode": "baseline",
+  "model": "baseline_rules",
+  "result": {
+    "summary": "[Baseline] SQL injection attempt. on target-2-compute",
+    "hypothesis": "Rule-based assessment: SQL injection attempt.. Severity high suggests investigate action.",
+    "possible_causes": [
+      "SQL injection attempt.",
+      "MITRE ATT&CK tactic: Initial Access"
+    ],
+    "key_indicators": [
+      "Source IP: 198.51.100.77",
+      "MITRE techniques: T1190",
+      "Log excerpt: 198.51.100.77 - - [06/Apr/2026:17:15:10 +0000] \"GET /api/users?id=1' OR '1'='1 HTTP/1.1\" 500 0"
+    ],
+    "recommended_checks": [
+      "Review alert details manually"
+    ],
+    "confidence_note": "Low confidence — rule-based baseline without LLM contextual analysis. This assessment uses only Wazuh metadata and predefined heuristics.",
+    "criticality": {
+      "score": 7,
+      "level": "high",
+      "justification": "Based on Wazuh rule level (12), severity mapping: high → high",
+      "contributing_factors": [
+        "Wazuh rule level: 12",
+        "Rule groups: web, accesslog, attack",
+        "MITRE tactics: Initial Access"
+      ]
+    },
+    "response": {
+      "action": "investigate",
+      "urgency": "within_1h",
+      "specific_steps": [
+        "Review alert details manually"
+      ],
+      "escalation_needed": true,
+      "escalation_reason": "Severity high requires attention"
+    }
+  },
+  "raw_response": "[baseline]",
+  "latency_ms": 0,
+  "prompt_tokens": 0,
+  "completion_tokens": 0,
+  "schema_valid": true,
+  "scores": {
+    "severity_match": true,
+    "response_match": false,
+    "indicator_coverage": 0.667,
+    "false_positive_correct": null,
+    "predicted_severity": "high",
+    "expected_severity": "high",
+    "predicted_action": "investigate",
+    "expected_action": "contain"
+  }
+}

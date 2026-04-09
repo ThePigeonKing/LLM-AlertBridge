@@ -1,0 +1,68 @@
+{
+  "alert_id": "eval-004",
+  "category": "file_integrity",
+  "ground_truth": {
+    "is_true_positive": true,
+    "expected_severity": "high",
+    "expected_response": "investigate",
+    "expected_key_indicators": [
+      "/etc/passwd",
+      "content changed",
+      "integrity"
+    ],
+    "expected_mitre_tactic": "Impact",
+    "notes": "Critical system file modification"
+  },
+  "mode": "baseline",
+  "model": "baseline_rules",
+  "result": {
+    "summary": "[Baseline] Integrity checksum changed. on target-2-compute",
+    "hypothesis": "Rule-based assessment: Integrity checksum changed.. Severity medium suggests investigate action.",
+    "possible_causes": [
+      "Integrity checksum changed.",
+      "MITRE ATT&CK tactic: Impact"
+    ],
+    "key_indicators": [
+      "MITRE techniques: T1565.001",
+      "Log excerpt: File '/etc/passwd' modified. MD5 changed from a1b2c3d4e5f6 to f6e5d4c3b2a1"
+    ],
+    "recommended_checks": [
+      "Review alert details manually"
+    ],
+    "confidence_note": "Low confidence — rule-based baseline without LLM contextual analysis. This assessment uses only Wazuh metadata and predefined heuristics.",
+    "criticality": {
+      "score": 5,
+      "level": "medium",
+      "justification": "Based on Wazuh rule level (7), severity mapping: medium → medium",
+      "contributing_factors": [
+        "Wazuh rule level: 7",
+        "Rule groups: ossec, syscheck, syscheck_entry_modified",
+        "MITRE tactics: Impact"
+      ]
+    },
+    "response": {
+      "action": "investigate",
+      "urgency": "within_24h",
+      "specific_steps": [
+        "Review alert details manually"
+      ],
+      "escalation_needed": false,
+      "escalation_reason": null
+    }
+  },
+  "raw_response": "[baseline]",
+  "latency_ms": 0,
+  "prompt_tokens": 0,
+  "completion_tokens": 0,
+  "schema_valid": true,
+  "scores": {
+    "severity_match": false,
+    "response_match": true,
+    "indicator_coverage": 0.667,
+    "false_positive_correct": null,
+    "predicted_severity": "medium",
+    "expected_severity": "high",
+    "predicted_action": "investigate",
+    "expected_action": "investigate"
+  }
+}

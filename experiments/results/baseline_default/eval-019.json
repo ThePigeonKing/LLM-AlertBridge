@@ -1,0 +1,73 @@
+{
+  "alert_id": "eval-019",
+  "category": "privilege_escalation",
+  "ground_truth": {
+    "is_true_positive": true,
+    "expected_severity": "high",
+    "expected_response": "contain",
+    "expected_key_indicators": [
+      "not in sudoers",
+      "www-data",
+      "privilege escalation attempt"
+    ],
+    "expected_mitre_tactic": "Privilege Escalation",
+    "notes": "Web service account trying to escalate"
+  },
+  "mode": "baseline",
+  "model": "baseline_rules",
+  "result": {
+    "summary": "[Baseline] Unauthorized sudo attempt (user not in sudoers). on target-2-compute",
+    "hypothesis": "Rule-based assessment: Unauthorized sudo attempt (user not in sudoers).. Severity medium suggests monitor action.",
+    "possible_causes": [
+      "Unauthorized sudo attempt (user not in sudoers).",
+      "MITRE ATT&CK tactic: Privilege Escalation"
+    ],
+    "key_indicators": [
+      "Target user: root",
+      "MITRE techniques: T1548.003",
+      "Log excerpt: Apr  6 21:30:00 target-2 sudo: www-data : user NOT in sudoers ; TTY=pts/2 ; PWD=/var/www ; USER=root ; COMMAND=/bin/bash"
+    ],
+    "recommended_checks": [
+      "Verify the sudo action was expected",
+      "Check the command executed with elevated privileges",
+      "Review recent sudo usage by the same user"
+    ],
+    "confidence_note": "Low confidence — rule-based baseline without LLM contextual analysis. This assessment uses only Wazuh metadata and predefined heuristics.",
+    "criticality": {
+      "score": 5,
+      "level": "medium",
+      "justification": "Based on Wazuh rule level (8), severity mapping: medium → medium",
+      "contributing_factors": [
+        "Wazuh rule level: 8",
+        "Rule groups: syslog, sudo, authentication_failed",
+        "MITRE tactics: Privilege Escalation"
+      ]
+    },
+    "response": {
+      "action": "monitor",
+      "urgency": "within_24h",
+      "specific_steps": [
+        "Verify the sudo action was expected",
+        "Check the command executed with elevated privileges",
+        "Review recent sudo usage by the same user"
+      ],
+      "escalation_needed": false,
+      "escalation_reason": null
+    }
+  },
+  "raw_response": "[baseline]",
+  "latency_ms": 0,
+  "prompt_tokens": 0,
+  "completion_tokens": 0,
+  "schema_valid": true,
+  "scores": {
+    "severity_match": false,
+    "response_match": false,
+    "indicator_coverage": 0.667,
+    "false_positive_correct": null,
+    "predicted_severity": "medium",
+    "expected_severity": "high",
+    "predicted_action": "monitor",
+    "expected_action": "contain"
+  }
+}

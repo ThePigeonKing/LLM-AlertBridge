@@ -28,6 +28,14 @@ class Analysis(Base):
     recommended_checks: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
     confidence_note: Mapped[str] = mapped_column(Text, nullable=False, default="")
 
+    criticality_score: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    criticality_level: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    criticality_justification: Mapped[str | None] = mapped_column(Text, nullable=True)
+    response_action: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    response_urgency: Mapped[str | None] = mapped_column(String(50), nullable=True)
+
+    analysis_mode: Mapped[str | None] = mapped_column(String(50), nullable=True)
+
     raw_response: Mapped[str] = mapped_column(Text, nullable=False, default="")
     model_name: Mapped[str] = mapped_column(String(255), nullable=False, default="")
     prompt_tokens: Mapped[int | None] = mapped_column(Integer, nullable=True)
@@ -41,4 +49,4 @@ class Analysis(Base):
     alert: Mapped["Alert"] = relationship(back_populates="analyses")  # noqa: F821
 
     def __repr__(self) -> str:
-        return f"<Analysis {self.id} alert={self.alert_id}>"
+        return f"<Analysis {self.id} alert={self.alert_id} mode={self.analysis_mode}>"

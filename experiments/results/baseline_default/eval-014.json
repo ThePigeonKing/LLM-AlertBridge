@@ -1,0 +1,64 @@
+{
+  "alert_id": "eval-014",
+  "category": "benign",
+  "ground_truth": {
+    "is_true_positive": false,
+    "expected_severity": "info",
+    "expected_response": "ignore",
+    "expected_key_indicators": [
+      "log rotation",
+      "syslog.1"
+    ],
+    "expected_mitre_tactic": "",
+    "notes": "Routine log rotation"
+  },
+  "mode": "baseline",
+  "model": "baseline_rules",
+  "result": {
+    "summary": "[Baseline] Log file rotated. on target-2-compute",
+    "hypothesis": "Rule-based assessment: Log file rotated.. Severity info suggests investigate action.",
+    "possible_causes": [
+      "Log file rotated."
+    ],
+    "key_indicators": [
+      "Log excerpt: Log file rotated: /var/log/syslog.1"
+    ],
+    "recommended_checks": [
+      "Review alert details manually"
+    ],
+    "confidence_note": "Low confidence — rule-based baseline without LLM contextual analysis. This assessment uses only Wazuh metadata and predefined heuristics.",
+    "criticality": {
+      "score": 1,
+      "level": "info",
+      "justification": "Based on Wazuh rule level (3), severity mapping: info → info",
+      "contributing_factors": [
+        "Wazuh rule level: 3",
+        "Rule groups: ossec, syscheck"
+      ]
+    },
+    "response": {
+      "action": "investigate",
+      "urgency": "scheduled",
+      "specific_steps": [
+        "Review alert details manually"
+      ],
+      "escalation_needed": false,
+      "escalation_reason": null
+    }
+  },
+  "raw_response": "[baseline]",
+  "latency_ms": 0,
+  "prompt_tokens": 0,
+  "completion_tokens": 0,
+  "schema_valid": true,
+  "scores": {
+    "severity_match": true,
+    "response_match": false,
+    "indicator_coverage": 0.5,
+    "false_positive_correct": false,
+    "predicted_severity": "info",
+    "expected_severity": "info",
+    "predicted_action": "investigate",
+    "expected_action": "ignore"
+  }
+}

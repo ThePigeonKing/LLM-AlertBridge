@@ -1,0 +1,74 @@
+{
+  "alert_id": "eval-001",
+  "category": "ssh_brute_force",
+  "ground_truth": {
+    "is_true_positive": true,
+    "expected_severity": "low",
+    "expected_response": "investigate",
+    "expected_key_indicators": [
+      "source IP 203.0.113.42",
+      "target user root",
+      "failed password"
+    ],
+    "expected_mitre_tactic": "Credential Access",
+    "notes": "Single failed SSH login, not yet brute-force"
+  },
+  "mode": "baseline",
+  "model": "baseline_rules",
+  "result": {
+    "summary": "[Baseline] sshd: Attempt to login using a denied user. on target-1-compute",
+    "hypothesis": "Rule-based assessment: sshd: Attempt to login using a denied user.. Severity low suggests investigate action.",
+    "possible_causes": [
+      "sshd: Attempt to login using a denied user.",
+      "MITRE ATT&CK tactic: Credential Access"
+    ],
+    "key_indicators": [
+      "Source IP: 203.0.113.42",
+      "Target user: root",
+      "MITRE techniques: T1110",
+      "Log excerpt: Apr  6 14:22:01 target-1 sshd[12345]: Failed password for invalid user root from 203.0.113.42 port 44231 ssh2"
+    ],
+    "recommended_checks": [
+      "Check source IP reputation",
+      "Review failed login count in the last hour",
+      "Verify target account is not compromised"
+    ],
+    "confidence_note": "Low confidence — rule-based baseline without LLM contextual analysis. This assessment uses only Wazuh metadata and predefined heuristics.",
+    "criticality": {
+      "score": 3,
+      "level": "low",
+      "justification": "Based on Wazuh rule level (5), severity mapping: low → low",
+      "contributing_factors": [
+        "Wazuh rule level: 5",
+        "Rule groups: syslog, sshd, authentication_failed",
+        "MITRE tactics: Credential Access"
+      ]
+    },
+    "response": {
+      "action": "investigate",
+      "urgency": "scheduled",
+      "specific_steps": [
+        "Check source IP reputation",
+        "Review failed login count in the last hour",
+        "Verify target account is not compromised"
+      ],
+      "escalation_needed": false,
+      "escalation_reason": null
+    }
+  },
+  "raw_response": "[baseline]",
+  "latency_ms": 0,
+  "prompt_tokens": 0,
+  "completion_tokens": 0,
+  "schema_valid": true,
+  "scores": {
+    "severity_match": true,
+    "response_match": true,
+    "indicator_coverage": 0.333,
+    "false_positive_correct": null,
+    "predicted_severity": "low",
+    "expected_severity": "low",
+    "predicted_action": "investigate",
+    "expected_action": "investigate"
+  }
+}

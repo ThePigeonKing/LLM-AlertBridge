@@ -1,0 +1,68 @@
+{
+  "alert_id": "eval-005",
+  "category": "file_integrity",
+  "ground_truth": {
+    "is_true_positive": true,
+    "expected_severity": "high",
+    "expected_response": "contain",
+    "expected_key_indicators": [
+      "/tmp/.hidden/",
+      "backdoor.sh",
+      "new file"
+    ],
+    "expected_mitre_tactic": "Command and Control",
+    "notes": "Suspicious hidden file dropped"
+  },
+  "mode": "baseline",
+  "model": "baseline_rules",
+  "result": {
+    "summary": "[Baseline] File added to the system. on target-1-compute",
+    "hypothesis": "Rule-based assessment: File added to the system.. Severity medium suggests investigate action.",
+    "possible_causes": [
+      "File added to the system.",
+      "MITRE ATT&CK tactic: Command and Control"
+    ],
+    "key_indicators": [
+      "MITRE techniques: T1105",
+      "Log excerpt: New file '/tmp/.hidden/backdoor.sh' added to the system."
+    ],
+    "recommended_checks": [
+      "Review alert details manually"
+    ],
+    "confidence_note": "Low confidence — rule-based baseline without LLM contextual analysis. This assessment uses only Wazuh metadata and predefined heuristics.",
+    "criticality": {
+      "score": 5,
+      "level": "medium",
+      "justification": "Based on Wazuh rule level (7), severity mapping: medium → medium",
+      "contributing_factors": [
+        "Wazuh rule level: 7",
+        "Rule groups: ossec, syscheck, syscheck_entry_added",
+        "MITRE tactics: Command and Control"
+      ]
+    },
+    "response": {
+      "action": "investigate",
+      "urgency": "within_24h",
+      "specific_steps": [
+        "Review alert details manually"
+      ],
+      "escalation_needed": false,
+      "escalation_reason": null
+    }
+  },
+  "raw_response": "[baseline]",
+  "latency_ms": 0,
+  "prompt_tokens": 0,
+  "completion_tokens": 0,
+  "schema_valid": true,
+  "scores": {
+    "severity_match": false,
+    "response_match": false,
+    "indicator_coverage": 1.0,
+    "false_positive_correct": null,
+    "predicted_severity": "medium",
+    "expected_severity": "high",
+    "predicted_action": "investigate",
+    "expected_action": "contain"
+  }
+}

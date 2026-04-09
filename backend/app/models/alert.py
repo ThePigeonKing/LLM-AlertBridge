@@ -51,6 +51,9 @@ class Alert(Base):
     analyses: Mapped[list["Analysis"]] = relationship(  # noqa: F821
         back_populates="alert", cascade="all, delete-orphan"
     )
+    enrichments: Mapped[list["Enrichment"]] = relationship(  # noqa: F821
+        back_populates="alert", cascade="all, delete-orphan"
+    )
 
     def __repr__(self) -> str:
         return f"<Alert {self.id} rule={self.rule_id} status={self.status}>"

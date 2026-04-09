@@ -1,0 +1,53 @@
+<div class="space-y-3 text-sm">
+    <p class="text-soc-muted text-xs italic">{{ correlation.correlation_summary }}</p>
+
+    {% if correlation.temporal_alerts %}
+    <div>
+        <h4 class="text-xs font-semibold uppercase text-soc-muted tracking-wider mb-1">Related Alerts (same host, time window)</h4>
+        <div class="space-y-1">
+            {% for ta in correlation.temporal_alerts[:5] %}
+            <div class="flex items-center gap-2 text-xs">
+                <span class="
+                    {% if ta.severity == 'critical' %}text-red-400
+                    {% elif ta.severity == 'high' %}text-orange-400
+                    {% elif ta.severity == 'medium' %}text-yellow-400
+                    {% elif ta.severity == 'low' %}text-blue-400
+                    {% else %}text-slate-400{% endif %}">&#9679;</span>
+                <a href="/alerts/{{ ta.alert_id }}" class="hover:text-white transition-colors">
+                    [{{ ta.rule_id }}] {{ ta.rule_description | truncate(60) }}
+                </a>
+                <span class="text-soc-muted">({{ ta.time_delta_seconds }}s)</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if correlation.context_matches %}
+    <div>
+        <h4 class="text-xs font-semibold uppercase text-soc-muted tracking-wider mb-1">Context Matches</h4>
+        <div class="space-y-1">
+            {% for cm in correlation.context_matches[:5] %}
+            <div class="text-xs p-2 bg-slate-900 rounded border border-slate-800">
+                <span class="text-yellow-400">{{ cm.matched_field }}</span>:
+                <span class="font-mono">{{ cm.alert_value }}</span>
+                <span class="text-soc-muted">({{ cm.match_type }}, {{ cm.query_name }})</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if correlation.mitre_chains %}
+    <div>
+        <h4 class="text-xs font-semibold uppercase text-soc-muted tracking-wider mb-1">MITRE ATT&CK Chains</h4>
+        {% for mc in correlation.mitre_chains %}
+        <div class="text-xs p-2 bg-slate-900 rounded border border-slate-800">
+            <span class="text-purple-400 font-semibold">{{ mc.tactic }}</span>
+            — {{ mc.chain_length }} alert(s),
+            techniques: {{ mc.technique_ids | join(', ') }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>

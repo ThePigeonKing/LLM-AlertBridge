@@ -1,0 +1,72 @@
+{
+  "alert_id": "eval-010",
+  "category": "rootkit",
+  "ground_truth": {
+    "is_true_positive": true,
+    "expected_severity": "critical",
+    "expected_response": "escalate",
+    "expected_key_indicators": [
+      "trojaned",
+      "/usr/bin/ls",
+      "rootkit"
+    ],
+    "expected_mitre_tactic": "Defense Evasion",
+    "notes": "Strong rootkit indicator"
+  },
+  "mode": "baseline",
+  "model": "baseline_rules",
+  "result": {
+    "summary": "[Baseline] Host-based anomaly detection event (rootcheck). on target-1-compute",
+    "hypothesis": "Rule-based assessment: Host-based anomaly detection event (rootcheck).. Severity medium suggests contain action.",
+    "possible_causes": [
+      "Host-based anomaly detection event (rootcheck).",
+      "MITRE ATT&CK tactic: Defense Evasion"
+    ],
+    "key_indicators": [
+      "MITRE techniques: T1014",
+      "Log excerpt: Trojaned version of file '/usr/bin/ls' detected. Possible rootkit activity."
+    ],
+    "recommended_checks": [
+      "Verify binary integrity against package manager checksums",
+      "Check for other indicators of rootkit activity",
+      "Consider isolating the host for forensic analysis"
+    ],
+    "confidence_note": "Low confidence — rule-based baseline without LLM contextual analysis. This assessment uses only Wazuh metadata and predefined heuristics.",
+    "criticality": {
+      "score": 5,
+      "level": "medium",
+      "justification": "Based on Wazuh rule level (7), severity mapping: medium → medium",
+      "contributing_factors": [
+        "Wazuh rule level: 7",
+        "Rule groups: ossec, rootcheck",
+        "MITRE tactics: Defense Evasion"
+      ]
+    },
+    "response": {
+      "action": "contain",
+      "urgency": "within_24h",
+      "specific_steps": [
+        "Verify binary integrity against package manager checksums",
+        "Check for other indicators of rootkit activity",
+        "Consider isolating the host for forensic analysis"
+      ],
+      "escalation_needed": false,
+      "escalation_reason": null
+    }
+  },
+  "raw_response": "[baseline]",
+  "latency_ms": 0,
+  "prompt_tokens": 0,
+  "completion_tokens": 0,
+  "schema_valid": true,
+  "scores": {
+    "severity_match": false,
+    "response_match": false,
+    "indicator_coverage": 1.0,
+    "false_positive_correct": null,
+    "predicted_severity": "medium",
+    "expected_severity": "critical",
+    "predicted_action": "contain",
+    "expected_action": "escalate"
+  }
+}

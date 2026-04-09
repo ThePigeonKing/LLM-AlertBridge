@@ -6,6 +6,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.app.db.session import get_session
 from backend.app.services import alert_service
+from backend.app.services.correlation_service import correlate_alert
+from backend.app.services.enrichment_service import get_enrichment
 from backend.app.templates import templates
 
 router = APIRouter(tags=["views"])
@@ -53,11 +55,22 @@ async def alert_detail_page(
     latest_analysis = None
     if alert.analyses:
         latest_analysis = max(alert.analyses, key=lambda a: a.created_at)
+
+    enrichment = await get_enrichment(session, alert_id)
+
+    correlation = None
+    if enrichment:
+        import contextlib
+        with contextlib.suppress(Exception):
+            correlation = await correlate_alert(session, alert_id, enrichment=enrichment)
+
     return templates.TemplateResponse(
         request=request,
         name="alert_detail.html",
         context={
             "alert": alert,
             "analysis": latest_analysis,
+            "enrichment": enrichment,
+            "correlation": correlation,
         },
     )

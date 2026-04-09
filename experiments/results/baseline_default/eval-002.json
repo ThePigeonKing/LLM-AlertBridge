@@ -1,0 +1,74 @@
+{
+  "alert_id": "eval-002",
+  "category": "ssh_brute_force",
+  "ground_truth": {
+    "is_true_positive": true,
+    "expected_severity": "high",
+    "expected_response": "contain",
+    "expected_key_indicators": [
+      "brute force",
+      "203.0.113.42",
+      "multiple failed attempts"
+    ],
+    "expected_mitre_tactic": "Credential Access",
+    "notes": "Active brute-force from same IP"
+  },
+  "mode": "baseline",
+  "model": "baseline_rules",
+  "result": {
+    "summary": "[Baseline] sshd: brute force trying to get access to the system. on target-1-compute",
+    "hypothesis": "Rule-based assessment: sshd: brute force trying to get access to the system.. Severity high suggests investigate action.",
+    "possible_causes": [
+      "sshd: brute force trying to get access to the system.",
+      "MITRE ATT&CK tactic: Credential Access"
+    ],
+    "key_indicators": [
+      "Source IP: 203.0.113.42",
+      "Target user: admin",
+      "MITRE techniques: T1110.001",
+      "Log excerpt: Apr  6 14:25:33 target-1 sshd[12389]: Failed password for invalid user admin from 203.0.113.42 port 44298 ssh2"
+    ],
+    "recommended_checks": [
+      "Check source IP reputation",
+      "Review failed login count in the last hour",
+      "Verify target account is not compromised"
+    ],
+    "confidence_note": "Low confidence — rule-based baseline without LLM contextual analysis. This assessment uses only Wazuh metadata and predefined heuristics.",
+    "criticality": {
+      "score": 7,
+      "level": "high",
+      "justification": "Based on Wazuh rule level (10), severity mapping: high → high",
+      "contributing_factors": [
+        "Wazuh rule level: 10",
+        "Rule groups: syslog, sshd, authentication_failures",
+        "MITRE tactics: Credential Access"
+      ]
+    },
+    "response": {
+      "action": "investigate",
+      "urgency": "within_1h",
+      "specific_steps": [
+        "Check source IP reputation",
+        "Review failed login count in the last hour",
+        "Verify target account is not compromised"
+      ],
+      "escalation_needed": true,
+      "escalation_reason": "Severity high requires attention"
+    }
+  },
+  "raw_response": "[baseline]",
+  "latency_ms": 0,
+  "prompt_tokens": 0,
+  "completion_tokens": 0,
+  "schema_valid": true,
+  "scores": {
+    "severity_match": true,
+    "response_match": false,
+    "indicator_coverage": 0.667,
+    "false_positive_correct": null,
+    "predicted_severity": "high",
+    "expected_severity": "high",
+    "predicted_action": "investigate",
+    "expected_action": "contain"
+  }
+}

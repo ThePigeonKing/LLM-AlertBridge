@@ -1,0 +1,68 @@
+{
+  "alert_id": "eval-017",
+  "category": "file_integrity",
+  "ground_truth": {
+    "is_true_positive": true,
+    "expected_severity": "critical",
+    "expected_response": "escalate",
+    "expected_key_indicators": [
+      "/usr/bin/ls",
+      "binary modified",
+      "inode changed"
+    ],
+    "expected_mitre_tactic": "Defense Evasion",
+    "notes": "System binary replacement — rootkit confirmation"
+  },
+  "mode": "baseline",
+  "model": "baseline_rules",
+  "result": {
+    "summary": "[Baseline] Integrity checksum changed. on target-1-compute",
+    "hypothesis": "Rule-based assessment: Integrity checksum changed.. Severity medium suggests investigate action.",
+    "possible_causes": [
+      "Integrity checksum changed.",
+      "MITRE ATT&CK tactic: Defense Evasion"
+    ],
+    "key_indicators": [
+      "MITRE techniques: T1222",
+      "Log excerpt: File '/usr/bin/ls' modified. Possible binary replacement."
+    ],
+    "recommended_checks": [
+      "Review alert details manually"
+    ],
+    "confidence_note": "Low confidence — rule-based baseline without LLM contextual analysis. This assessment uses only Wazuh metadata and predefined heuristics.",
+    "criticality": {
+      "score": 5,
+      "level": "medium",
+      "justification": "Based on Wazuh rule level (7), severity mapping: medium → medium",
+      "contributing_factors": [
+        "Wazuh rule level: 7",
+        "Rule groups: ossec, syscheck, syscheck_entry_modified",
+        "MITRE tactics: Defense Evasion"
+      ]
+    },
+    "response": {
+      "action": "investigate",
+      "urgency": "within_24h",
+      "specific_steps": [
+        "Review alert details manually"
+      ],
+      "escalation_needed": false,
+      "escalation_reason": null
+    }
+  },
+  "raw_response": "[baseline]",
+  "latency_ms": 0,
+  "prompt_tokens": 0,
+  "completion_tokens": 0,
+  "schema_valid": true,
+  "scores": {
+    "severity_match": false,
+    "response_match": false,
+    "indicator_coverage": 0.333,
+    "false_positive_correct": null,
+    "predicted_severity": "medium",
+    "expected_severity": "critical",
+    "predicted_action": "investigate",
+    "expected_action": "escalate"
+  }
+}
