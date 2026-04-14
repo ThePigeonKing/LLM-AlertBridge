@@ -1,5 +1,6 @@
 # cursor-specific
 .cursor/
+.DS_Store
 
 # project data
 data/*.db
